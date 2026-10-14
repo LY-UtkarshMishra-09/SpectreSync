@@ -7,6 +7,9 @@ const path = require("path");
 const app = express();
 const PORT = 5000;
 
+// Enable proxy header trust for accurate IP resolution behind reverse proxies
+app.set("trust proxy", true);
+
 app.use(cors());
 app.use(express.json());
 
@@ -195,6 +198,38 @@ function generateHighValueDecoyPayload(trapId) {
   };
 }
 
+// Extract and normalize real client IP address
+function getClientIp(req) {
+  let ip = null;
+
+  // Check X-Forwarded-For header (handles multi-proxy chains)
+  const forwardedFor = req.headers["x-forwarded-for"];
+  if (forwardedFor && typeof forwardedFor === "string") {
+    ip = forwardedFor.split(",")[0].trim();
+  }
+
+  // Fallback to socket remoteAddress, Express req.ip, or connection
+  if (!ip) {
+    ip = req.socket?.remoteAddress || req.ip || req.connection?.remoteAddress;
+  }
+
+  if (!ip || typeof ip !== "string") {
+    return "Unknown";
+  }
+
+  // Normalize IPv6-mapped IPv4 addresses (::ffff:127.0.0.1)
+  if (ip.startsWith("::ffff:")) {
+    ip = ip.replace("::ffff:", "");
+  }
+
+  // Normalize local loopback addresses for clean display in SOC feed
+  if (ip === "::1" || ip === "127.0.0.1") {
+    return "127.0.0.1 (Local)";
+  }
+
+  return ip;
+}
+
 // -- Routes -------------------------------------------------------------------
 
 // POST /api/scan -- scan target path, persist scan and generated decoys
@@ -239,7 +274,7 @@ app.post("/api/scan", (req, res) => {
 // GET & POST /api/canary -- behavioral tarpitting, delay injection, alert recording, and fake data payload
 const handleCanaryHit = async (req, res) => {
   const trapId = req.query.id || req.body?.id || "unknown";
-  const sourceIp = req.ip || req.connection?.remoteAddress || "unknown";
+  const sourceIp = getClientIp(req);
   const userAgent = req.headers["user-agent"] || "Automated Scraper";
 
   // Calculate adaptive randomized exponential tarpit delay (2000ms - 6000ms)
