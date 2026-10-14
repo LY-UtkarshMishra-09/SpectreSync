@@ -16,6 +16,8 @@ import {
   Sparkles,
   Server,
   Zap,
+  Play,
+  Bell,
 } from "lucide-react";
 
 // Core production assets placed at the center of the topology
@@ -520,6 +522,18 @@ export default function SpectreSyncDashboard() {
   const [logs, setLogs] = useState([]);
   const [decoys, setDecoys] = useState([]);
   const [alerts, setAlerts] = useState([]);
+  const [testingTrapId, setTestingTrapId] = useState(null);
+  const [toastNotification, setToastNotification] = useState(null);
+  const redirectTimerRef = useRef(null);
+
+  // Clean up any pending redirect timer on unmount
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) {
+        clearTimeout(redirectTimerRef.current);
+      }
+    };
+  }, []);
 
   // Telemetry log appender
   const appendLog = useCallback((message, level = "info") => {
@@ -548,6 +562,52 @@ export default function SpectreSyncDashboard() {
       setIsRefreshing(false);
     }
   }, [fetchAlerts]);
+
+  // Trigger or simulate a canary trap activation
+  const handleTriggerCanary = async (trapId) => {
+    setTestingTrapId(trapId);
+    appendLog(`Simulating canary trap hit: ${trapId}...`, "warn");
+
+    try {
+      const endpoint = `http://localhost:5000/api/canary?id=${encodeURIComponent(trapId)}`;
+      const response = await fetch(endpoint);
+      if (!response.ok) throw new Error(`Status ${response.status}`);
+      await response.json();
+
+      appendLog(`Canary trap ${trapId} triggered successfully. Tarpit engaged.`, "warn");
+
+      // Show temporary confirmation toast banner
+      setToastNotification({
+        title: "Canary Trap Activated",
+        message: `Trap ${trapId} triggered. Redirecting to SOC Threat Stream...`,
+        trapId,
+      });
+
+      // Clear any existing redirect timer
+      if (redirectTimerRef.current) {
+        clearTimeout(redirectTimerRef.current);
+      }
+
+      // Automatically switch to the SOC tab after 1.5 seconds and refresh alerts
+      redirectTimerRef.current = setTimeout(async () => {
+        setActiveTab("soc");
+        await fetchAlerts();
+        appendLog(`Switched view to SOC Threat Feed. Fresh telemetry synchronized.`, "info");
+        // Dismiss toast after redirect
+        setTimeout(() => setToastNotification(null), 2500);
+      }, 1500);
+    } catch (err) {
+      appendLog(`Failed to trigger canary ${trapId}: ${err.message}`, "error");
+      setToastNotification({
+        title: "Simulation Failed",
+        message: `Could not trigger canary: ${err.message}`,
+        error: true,
+      });
+      setTimeout(() => setToastNotification(null), 3000);
+    } finally {
+      setTestingTrapId(null);
+    }
+  };
 
   // Periodic and tab-driven alert synchronization
   useEffect(() => {
@@ -720,6 +780,53 @@ export default function SpectreSyncDashboard() {
 
       {/* Main Workspace Layout */}
       <main className="max-w-7xl mx-auto px-4 space-y-6">
+        {/* Canary Activation & Redirection Toast Banner */}
+        {toastNotification && (
+          <div
+            className={`transition-all duration-300 backdrop-blur-xl border rounded-2xl p-4 shadow-2xl flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 ${
+              toastNotification.error
+                ? "bg-rose-950/60 border-rose-500/30 text-rose-200 shadow-rose-950/40"
+                : "bg-cyan-950/60 border-cyan-500/30 text-cyan-200 shadow-cyan-950/40"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={`p-2 rounded-xl border ${
+                  toastNotification.error
+                    ? "bg-rose-500/10 border-rose-500/30 text-rose-400"
+                    : "bg-cyan-500/10 border-cyan-500/30 text-cyan-400"
+                }`}
+              >
+                {toastNotification.error ? (
+                  <AlertTriangle className="w-5 h-5" />
+                ) : (
+                  <Bell className="w-5 h-5 animate-bounce" />
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-xs tracking-wide uppercase text-white">
+                    {toastNotification.title}
+                  </span>
+                  {toastNotification.trapId && (
+                    <span className="px-2 py-0.5 rounded-full font-mono text-[10px] bg-cyan-500/20 border border-cyan-500/40 text-cyan-300">
+                      {toastNotification.trapId}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-neutral-300 mt-0.5">{toastNotification.message}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-neutral-900/80 border border-white/10 text-[11px] font-mono text-neutral-400">
+                <RefreshCw className="w-3 h-3 text-cyan-400 animate-spin" />
+                <span>Redirecting...</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* TAB 1: Mesh Deployment */}
         {activeTab === "deploy" && (
           <div className="space-y-6">
@@ -861,30 +968,56 @@ export default function SpectreSyncDashboard() {
                         <th className="py-3 px-4">Decoy Value</th>
                         <th className="py-3 px-4">Category</th>
                         <th className="py-3 px-4">Canary Endpoint</th>
+                        <th className="py-3 px-4 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/4">
-                      {decoys.map((decoy, idx) => (
-                        <tr key={decoy.trap_id || decoy.id || idx} className="hover:bg-white/2 transition-colors">
-                          <td className="py-3 px-4 font-mono font-semibold text-cyan-400">
-                            {decoy.trap_id || decoy.id || `trap_${idx + 1}`}
-                          </td>
-                          <td className="py-3 px-4 font-mono text-white">
-                            {decoy.variable_name || decoy.trap_name || decoy.name}
-                          </td>
-                          <td className="py-3 px-4 font-mono text-neutral-400 truncate max-w-xs">
-                            {decoy.decoy_value || decoy.value || "••••••••"}
-                          </td>
-                          <td className="py-3 px-4">
-                            <span className="px-2 py-0.5 rounded-full bg-white/4 border border-white/8 text-neutral-300 text-[10px] font-medium uppercase">
-                              {decoy.category || decoy.trap_type || "secret"}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 font-mono text-neutral-400 hover:text-cyan-300 transition-colors">
-                            {decoy.endpoint || decoy.endpoint_url}
-                          </td>
-                        </tr>
-                      ))}
+                      {decoys.map((decoy, idx) => {
+                        const trapId = decoy.trap_id || decoy.id || `trap_${idx + 1}`;
+                        const isTesting = testingTrapId === trapId;
+
+                        return (
+                          <tr key={trapId} className="hover:bg-white/2 transition-colors">
+                            <td className="py-3 px-4 font-mono font-semibold text-cyan-400">
+                              {trapId}
+                            </td>
+                            <td className="py-3 px-4 font-mono text-white">
+                              {decoy.variable_name || decoy.trap_name || decoy.name}
+                            </td>
+                            <td className="py-3 px-4 font-mono text-neutral-400 truncate max-w-xs">
+                              {decoy.decoy_value || decoy.value || "••••••••"}
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="px-2 py-0.5 rounded-full bg-white/4 border border-white/8 text-neutral-300 text-[10px] font-medium uppercase">
+                                {decoy.category || decoy.trap_type || "secret"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 font-mono text-neutral-400 hover:text-cyan-300 transition-colors">
+                              {decoy.endpoint || decoy.endpoint_url}
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <button
+                                onClick={() => handleTriggerCanary(trapId)}
+                                disabled={isTesting || Boolean(testingTrapId)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-medium bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-all duration-200 disabled:opacity-40 cursor-pointer shadow-sm active:scale-[0.98]"
+                                title="Simulate canary trigger and test tarpit response"
+                              >
+                                {isTesting ? (
+                                  <>
+                                    <RefreshCw className="w-3 h-3 animate-spin" />
+                                    <span>Tarpitting...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Play className="w-3 h-3 text-rose-400" />
+                                    <span>Trigger Trap</span>
+                                  </>
+                                )}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
