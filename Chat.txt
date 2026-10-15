@@ -1,4 +1,4 @@
-#Gemini
+#Gemini (13/10/2026 - 15/10/2026)
 Here is the complete summary of our session to wrap things up:
 
 ### **Session Summary: SpectreSync**
@@ -15,4 +15,59 @@ Here is the complete summary of our session to wrap things up:
 * Generated a clean, emoji-free, production-ready `README.md`.
 * Resolved Git push remote tracking conflicts (`main -> main`).
 
-#ChatGPT
+#ChatGPT (15/10/2026 - 15/10/2026)
+# SpectreSync — Chat Summary
+
+**Project:** SpectreSync — Cybersecurity Deception & Threat Monitoring  
+**GitHub:** https://github.com/LY-UtkarshMishra-09/SpectreSync  
+**Team Size:** 5 members, including the team lead.
+
+## 1. README
+A complete GitHub README draft has been generated, covering:
+- Project overview and key features
+- Technology stack and repository structure
+- Installation and setup instructions
+- Workflow and architecture
+- Security considerations and current limitations
+- Future improvements and contribution guidelines
+- Five-member team section with placeholders for four teammates
+
+**Status:** Draft generated; not committed to GitHub.
+
+## 2. Six-Slide Presentation
+**File:** `SpectreSync_Presentation.pptx`
+
+Slides:
+1. Project introduction
+2. Problem and opportunity
+3. Solution overview and workflow
+4. Capabilities and architecture
+5. Demonstration workflow and current status
+6. Team and development roadmap
+
+**Design:** Corporate dark theme, restrained blue and teal accents, minimal visual effects.
+
+**Download:** [SpectreSync Presentation](sandbox:/mnt/data/SpectreSync_Presentation.pptx)
+
+## 3. Blank PowerPoint Template
+**File:** `SpectreSync_Dark_Corporate_Template.pptx`
+
+Includes six editable layouts:
+1. Title slide
+2. Problem and opportunity
+3. Solution and workflow
+4. Capabilities and architecture
+5. Demo, results, and findings
+6. Team and next steps
+
+**Design:** Corporate dark theme with editable placeholders, without excessive animations or lighting effects.
+
+**Download:** [Dark Corporate PPT Template](sandbox:/mnt/data/SpectreSync_Dark_Corporate_Template.pptx)
+
+## 4. Remaining Tasks
+- Add the names, roles, and GitHub profiles of the other four team members.
+- Add screenshots or demo visuals to the README and presentation.
+- Verify dependencies and integration between the Python dashboard, Express backend, FastAPI webhook listener, Next.js frontend, and database.
+- Add a license if the team decides to publish one.
+
+**Overall status:** The README draft, populated presentation, and blank presentation template have been generated. No changes have been committed to the GitHub repository.
