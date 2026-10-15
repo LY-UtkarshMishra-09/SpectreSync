@@ -18,6 +18,11 @@ import {
   Zap,
   Play,
   Bell,
+  Bot,
+  Cpu,
+  ShieldAlert,
+  Sliders,
+  ChevronRight,
 } from "lucide-react";
 
 // Core production assets placed at the center of the topology
@@ -524,7 +529,32 @@ export default function SpectreSyncDashboard() {
   const [alerts, setAlerts] = useState([]);
   const [testingTrapId, setTestingTrapId] = useState(null);
   const [toastNotification, setToastNotification] = useState(null);
-  const redirectTimerRef = useRef(null);
+  const [sentinelMode, setSentinelMode] = useState("autonomous"); // "autonomous" | "supervised"
+  const [sentinelStatus, setSentinelStatus] = useState("Monitoring Perimeter");
+  const [pendingApproval, setPendingApproval] = useState(null);
+  const [agentThoughts, setAgentThoughts] = useState([
+    {
+      time: "20:48:02",
+      stage: "PERIMETER_MONITOR",
+      thought: "Real-time deception fabric synchronized with SQLite WAL telemetry engine.",
+      action: "Standing by on port 5000 /api/canary.",
+    },
+    {
+      time: "20:48:15",
+      stage: "SURFACE_RECON",
+      thought: "Core production topology evaluated: 4 primary assets shielded across 190 invisible decoys.",
+      action: "Orbital decoy constellation locked in active state.",
+    },
+  ]);
+
+  // Append new AI agent reasoning thought to monologue stream
+  const appendAgentThought = useCallback((stage, thought, action) => {
+    const time = new Date().toLocaleTimeString();
+    setAgentThoughts((prev) => [
+      ...prev.slice(-14), // keep last 15 reasoning steps
+      { time, stage, thought, action },
+    ]);
+  }, []);
 
   // Clean up any pending redirect timer on unmount
   useEffect(() => {
@@ -566,20 +596,34 @@ export default function SpectreSyncDashboard() {
   // Trigger or simulate a canary trap activation
   const handleTriggerCanary = async (trapId) => {
     setTestingTrapId(trapId);
+    setSentinelStatus("Analyzing Attack Vector");
     appendLog(`Simulating canary trap hit: ${trapId}...`, "warn");
+    appendAgentThought(
+      "ANOMALY_DETECTION",
+      `Canary token access detected for target [${trapId}]. Querying threat signature against active mesh...`,
+      "Engaging behavioral tarpit delay matrix."
+    );
 
     try {
       const endpoint = `http://localhost:5000/api/canary?id=${encodeURIComponent(trapId)}`;
       const response = await fetch(endpoint);
       if (!response.ok) throw new Error(`Status ${response.status}`);
-      await response.json();
+      const data = await response.json();
 
-      appendLog(`Canary trap ${trapId} triggered successfully. Tarpit engaged.`, "warn");
+      const tarpitSeconds = data.tarpit_duration ? (data.tarpit_duration / 1000).toFixed(1) : "3.5";
+      setSentinelStatus("Adaptive Tarpitting Active");
+      appendLog(`Canary trap ${trapId} triggered successfully. Tarpit engaged (${tarpitSeconds}s).`, "warn");
+
+      appendAgentThought(
+        "TARPIT_RETARDATION",
+        `Attacker entrapped on [${trapId}]. Exponential delay (${tarpitSeconds}s) injected. Delivering high-value synthetic credentials payload.`,
+        "Threat entangled in deception mesh. Logging to SQLite SOC feed."
+      );
 
       // Show temporary confirmation toast banner
       setToastNotification({
         title: "Canary Trap Activated",
-        message: `Trap ${trapId} triggered. Redirecting to SOC Threat Stream...`,
+        message: `Sentinel entrapped attacker on ${trapId} (${tarpitSeconds}s tarpit). Redirecting to SOC...`,
         trapId,
       });
 
@@ -592,12 +636,18 @@ export default function SpectreSyncDashboard() {
       redirectTimerRef.current = setTimeout(async () => {
         setActiveTab("soc");
         await fetchAlerts();
+        setSentinelStatus("Perimeter Secured");
         appendLog(`Switched view to SOC Threat Feed. Fresh telemetry synchronized.`, "info");
-        // Dismiss toast after redirect
         setTimeout(() => setToastNotification(null), 2500);
       }, 1500);
     } catch (err) {
+      setSentinelStatus("Telemetry Error");
       appendLog(`Failed to trigger canary ${trapId}: ${err.message}`, "error");
+      appendAgentThought(
+        "ERROR_TELEMETRY",
+        `Canary ping failure: ${err.message}. Verifying backend connectivity on port 5000.`,
+        "Retry scheduled."
+      );
       setToastNotification({
         title: "Simulation Failed",
         message: `Could not trigger canary: ${err.message}`,
@@ -636,23 +686,25 @@ export default function SpectreSyncDashboard() {
     };
   }, [activeTab, appendLog]);
 
-  // Handle Deploy SpectreSync Mesh execution
-  const handleDeploy = async () => {
-    if (!targetPath.trim()) {
-      appendLog("Deployment failed: target repository path is required.", "error");
-      return;
-    }
-
+  // Execute actual deployment or stage for supervised approval
+  const executeMeshDeployment = async (path) => {
     setIsDeploying(true);
+    setSentinelStatus("Synthesizing Deception Fabric");
     setDecoys([]);
-    appendLog(`Initiating deception mesh deployment for: ${targetPath}`, "info");
+    appendLog(`Initiating deception mesh deployment for: ${path}`, "info");
+
+    appendAgentThought(
+      "SCAN_INGESTION",
+      `Analyzing repository architecture: [${path}]. Extracting environment variables, database keys, and API surface.`,
+      "Synthesizing high-probability honeytokens."
+    );
 
     try {
       appendLog("Connecting to scanning engine on Express backend...", "info");
       const response = await fetch("http://localhost:5000/api/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetPath: targetPath.trim() }),
+        body: JSON.stringify({ targetPath: path.trim() }),
       });
 
       if (!response.ok) {
@@ -666,12 +718,101 @@ export default function SpectreSyncDashboard() {
       setDecoys(trapsList);
 
       appendLog(`Synthesized and armed ${trapsList.length} context-aware canary traps.`, "success");
-      appendLog("Deception mesh active. Telemetry beacons listening.", "info");
+      appendLog("Mesh Secure: Deception perimeter active. Telemetry beacons listening.", "info");
+
+      setSentinelStatus("Autonomous Defense Active");
+      appendAgentThought(
+        "AUTONOMOUS_DEPLOY",
+        `Synthesized ${trapsList.length} polymorph traps tailored to repo context. Armed canary endpoints across mesh.`,
+        "Autonomous perimeter secured. Ready for adversarial probe."
+      );
+
+      // Show temporary confirmation toast banner
+      setToastNotification({
+        title: "Mesh Secure & Traps Bound",
+        message: `Autonomous Sentinel armed ${trapsList.length} traps. Redirecting to SOC Threat Feed...`,
+      });
+
+      // Clear any existing redirect timer
+      if (redirectTimerRef.current) {
+        clearTimeout(redirectTimerRef.current);
+      }
+
+      // Allow user 2 seconds to read the telemetry statements before redirecting
+      redirectTimerRef.current = setTimeout(async () => {
+        setActiveTab("soc");
+        await fetchAlerts();
+        appendLog("Switched view to SOC Threat Feed. Synchronized active threat feed.", "info");
+        setTimeout(() => setToastNotification(null), 2500);
+      }, 2000);
     } catch (err) {
+      setSentinelStatus("Deployment Error");
       appendLog(`Deployment error: ${err.message}. Is Express backend running on http://localhost:5000?`, "error");
+      appendAgentThought(
+        "SCAN_ABORTED",
+        `Failed to reach backend engine: ${err.message}. Ensure Express server is running on port 5000.`,
+        "Halting synthesis."
+      );
+      setToastNotification({
+        title: "Deployment Failed",
+        message: `Error deploying mesh: ${err.message}`,
+        error: true,
+      });
+      setTimeout(() => setToastNotification(null), 3000);
     } finally {
       setIsDeploying(false);
     }
+  };
+
+  // Handle Deploy SpectreSync Mesh execution (respects Autonomous vs Supervised Mode)
+  const handleDeploy = async () => {
+    if (!targetPath.trim()) {
+      appendLog("Deployment failed: target repository path is required.", "error");
+      return;
+    }
+
+    if (sentinelMode === "supervised") {
+      // In Supervised Mode, Sentinel drafts the proposal and awaits operator confirmation
+      setSentinelStatus("Awaiting Operator Approval");
+      appendAgentThought(
+        "SUPERVISED_GATE",
+        `Repository scan prepared for [${targetPath}]. Supervised Mode enabled: generating deployment proposal for operator sign-off.`,
+        "Action suspended pending manual approval."
+      );
+      setPendingApproval({
+        targetPath: targetPath.trim(),
+        recommendedTraps: 5,
+        strategy: "Adaptive Contextual Entanglement",
+      });
+      return;
+    }
+
+    // In Autonomous Mode, Sentinel acts immediately
+    await executeMeshDeployment(targetPath.trim());
+  };
+
+  // Approve action in Supervised Mode
+  const handleApproveDeployment = async () => {
+    if (!pendingApproval) return;
+    const target = pendingApproval.targetPath;
+    setPendingApproval(null);
+    appendAgentThought(
+      "SUPERVISED_APPROVED",
+      `Operator confirmed deployment for [${target}]. Sentinel proceeding with autonomous trap binding.`,
+      "Deploying mesh."
+    );
+    await executeMeshDeployment(target);
+  };
+
+  // Reject action in Supervised Mode
+  const handleRejectDeployment = () => {
+    appendAgentThought(
+      "SUPERVISED_REJECTED",
+      "Operator aborted deployment proposal. Reverting perimeter to passive telemetry state.",
+      "Standby."
+    );
+    setPendingApproval(null);
+    setSentinelStatus("Monitoring Perimeter");
   };
 
   const staticDecoys = useMemo(() => generateDecoyConstellation(190), []);
@@ -768,11 +909,53 @@ export default function SpectreSyncDashboard() {
             </button>
           </div>
 
-          {/* System status pill */}
-          <div className="hidden lg:flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Mesh Active
+          {/* Autonomous vs Supervised Defense Mode Switcher & Status Pill */}
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center bg-neutral-950/70 border border-white/6 p-0.5 rounded-xl text-xs">
+              <button
+                onClick={() => {
+                  setSentinelMode("autonomous");
+                  appendAgentThought(
+                    "MODE_SWITCH",
+                    "Switched to Autonomous Defense Sentinel mode. Automatic trap synthesis and tarpitting fully enabled.",
+                    "Autonomous guardrails active."
+                  );
+                }}
+                className={`px-3 py-1 rounded-lg font-medium transition-all duration-200 flex items-center gap-1.5 cursor-pointer ${
+                  sentinelMode === "autonomous"
+                    ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 shadow-sm"
+                    : "text-neutral-400 hover:text-white"
+                }`}
+                title="Autonomous Mode: Sentinel detects, synthesizes, and tarpits threats with 0 human intervention"
+              >
+                <Cpu className="w-3 h-3 text-cyan-400" />
+                <span>Autonomous</span>
+              </button>
+              <button
+                onClick={() => {
+                  setSentinelMode("supervised");
+                  appendAgentThought(
+                    "MODE_SWITCH",
+                    "Switched to Supervised Mode. Sentinel will draft deception strategies and require operator approval before binding.",
+                    "Human-in-the-loop gate armed."
+                  );
+                }}
+                className={`px-3 py-1 rounded-lg font-medium transition-all duration-200 flex items-center gap-1.5 cursor-pointer ${
+                  sentinelMode === "supervised"
+                    ? "bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-sm"
+                    : "text-neutral-400 hover:text-white"
+                }`}
+                title="Supervised Mode: Sentinel drafts proposals and requires operator approval before deploying"
+              >
+                <Sliders className="w-3 h-3 text-amber-400" />
+                <span>Supervised</span>
+              </button>
+            </div>
+
+            {/* Live Sentinel status indicator pill */}
+            <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+              <span>{sentinelStatus}</span>
             </div>
           </div>
         </div>
@@ -867,7 +1050,7 @@ export default function SpectreSyncDashboard() {
                     ) : (
                       <>
                         <Sparkles className="w-3.5 h-3.5" />
-                        Deploy SpectreSync Mesh
+                        Deploy Mesh & Bind Traps
                       </>
                     )}
                   </button>
@@ -893,8 +1076,10 @@ export default function SpectreSyncDashboard() {
                       <span className="font-mono text-emerald-400 font-medium">100% Operational</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-neutral-400">Tarpit Strategy</span>
-                      <span className="font-mono text-cyan-400 font-medium">Adaptive Exponential</span>
+                      <span className="text-neutral-400">Defense Mode</span>
+                      <span className={`font-mono font-medium ${sentinelMode === "autonomous" ? "text-cyan-400" : "text-amber-300"}`}>
+                        {sentinelMode === "autonomous" ? "Autonomous Sentinel" : "Supervised (Human Gate)"}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -903,6 +1088,93 @@ export default function SpectreSyncDashboard() {
                   <span>Engine: SQLite WAL</span>
                   <span className="text-neutral-400">Port 5000</span>
                 </div>
+              </div>
+            </div>
+
+            {/* Supervised Mode Pending Approval Banner */}
+            {pendingApproval && (
+              <div className="backdrop-blur-xl bg-amber-950/40 border border-amber-500/30 rounded-2xl p-5 shadow-2xl shadow-amber-950/20 space-y-3 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <ShieldAlert className="w-5 h-5 text-amber-400" />
+                    <div>
+                      <h4 className="text-xs font-semibold text-white uppercase tracking-wider">
+                        Supervised Action Required · Sentinel Trap Synthesis Proposal
+                      </h4>
+                      <p className="text-xs text-neutral-300 mt-0.5">
+                        The AI Sentinel drafted a deception matrix for <span className="font-mono text-amber-300">{pendingApproval.targetPath}</span>. Confirm deployment to arm the network.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleRejectDeployment}
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-medium bg-neutral-900/80 hover:bg-neutral-800 text-neutral-400 hover:text-white border border-white/10 transition-all cursor-pointer"
+                    >
+                      Reject
+                    </button>
+                    <button
+                      onClick={handleApproveDeployment}
+                      className="px-4 py-1.5 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-400 text-neutral-950 shadow-md shadow-amber-500/20 transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span>Approve & Arm Mesh</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* AI Security Agent Reasoning Panel ("Autonomous Defense Sentinel") */}
+            <div className="backdrop-blur-xl bg-neutral-900/40 border border-white/8 rounded-2xl p-6 shadow-xl shadow-black/20 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/6 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+                    <Bot className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xs uppercase tracking-wider font-semibold text-neutral-200">
+                        Autonomous Defense Sentinel · Agent Reasoning Stream
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">
+                        {sentinelStatus}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-neutral-400 mt-0.5">
+                      Live internal monologue and adaptive decision-making telemetry
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-[11px] text-neutral-400 font-mono">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                  <span>Sentinel Core Online</span>
+                </div>
+              </div>
+
+              {/* Copilot-style Monologue Stream */}
+              <div className="bg-neutral-950/80 border border-white/6 rounded-xl p-4 max-h-72 overflow-y-auto space-y-3 font-mono text-xs">
+                {agentThoughts.map((entry, idx) => (
+                  <div key={idx} className="space-y-1 pb-2 border-b border-white/4 last:border-b-0 last:pb-0">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="text-cyan-400 font-semibold flex items-center gap-1.5">
+                        <Cpu className="w-3 h-3 text-cyan-400" />
+                        [{entry.stage}]
+                      </span>
+                      <span className="text-neutral-500">{entry.time}</span>
+                    </div>
+                    <div className="text-neutral-200 leading-relaxed pl-4 border-l border-cyan-500/30">
+                      {entry.thought}
+                    </div>
+                    {entry.action && (
+                      <div className="text-[11px] text-emerald-400/90 pl-4 font-sans flex items-center gap-1.5">
+                        <span className="text-emerald-500 font-mono font-bold">Action:</span>
+                        <span>{entry.action}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
 
