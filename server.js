@@ -83,7 +83,7 @@ const insertAlert = db.prepare(`
 `);
 
 const selectAllAlerts = db.prepare(`
-  SELECT id, trap_id, timestamp, ip, ip AS source_ip, type, status, tarpit_duration
+  SELECT id, trap_id, timestamp, ip, ip AS source_ip, type, type AS user_agent, status, tarpit_duration
   FROM alerts ORDER BY timestamp DESC
 `);
 

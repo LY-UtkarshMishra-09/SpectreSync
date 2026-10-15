@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo, useSyncExternalStore } from "react";
 import {
   RefreshCw,
   Shield,
@@ -23,28 +23,129 @@ import {
   ShieldAlert,
   Sliders,
   ChevronRight,
+  Sun,
+  Moon,
 } from "lucide-react";
 
-// Core production assets placed at the center of the topology
+// Known decoy path and asset mappings for realistic enterprise honeytokens
+const KNOWN_TARGETS = {
+  trap_01: "/api/v1/auth/keys",
+  trap_02: "AWS_SECRET_ACCESS_KEY",
+  trap_03: "/admin/config.php",
+  trap_04: "PROD_DATABASE_URL",
+  trap_05: "/.env.production",
+  trap_06: "KMS_MASTER_ENCRYPTION_KEY",
+  trap_07: "/api/v2/vault/tokens",
+  trap_08: "GITHUB_PERSONAL_ACCESS_TOKEN",
+  trap_09: "/internal/metrics/prometheus",
+  trap_10: "POSTGRES_REPLICA_CREDENTIALS",
+  trap_11: "/api/v1/system/backup.tar.gz",
+  trap_12: "STRIPE_RESTRICTED_SECRET_KEY",
+};
+
+// Target Canary Asset resolver
+function getTrapTargetAsset(alert, decoys = []) {
+  if (alert.target_asset) return alert.target_asset;
+  if (alert.trap_name) return alert.trap_name;
+  if (alert.trap_id && KNOWN_TARGETS[alert.trap_id]) {
+    return KNOWN_TARGETS[alert.trap_id];
+  }
+  const match = decoys.find((d) => (d.trap_id || d.id) === alert.trap_id);
+  if (match) {
+    return match.endpoint || match.variable_name || match.name || alert.trap_id;
+  }
+  return alert.trap_id ? `/api/canary?id=${alert.trap_id}` : "/api/v1/auth/tokens";
+}
+
+// User-Agent and client environment parser
+function formatClientFingerprint(rawUa) {
+  if (!rawUa || rawUa === "Unknown" || rawUa === "Canary Hit") {
+    return "Python / Scrapy Engine (Bot)";
+  }
+  const ua = rawUa.toLowerCase();
+  if (ua.includes("powershell")) {
+    const vMatch = rawUa.match(/powershell\/([\d.]+)/i);
+    return vMatch ? `PowerShell v${vMatch[1]}` : "PowerShell v5.1";
+  }
+  if (ua.includes("curl")) {
+    const vMatch = rawUa.match(/curl\/([\d.]+)/i);
+    return vMatch ? `cURL Client v${vMatch[1]}` : "cURL CLI Tool";
+  }
+  if (ua.includes("python") || ua.includes("requests") || ua.includes("urllib")) {
+    return "Python-Requests Scanner";
+  }
+  if (ua.includes("go-http-client")) {
+    return "Go HTTP Prober (Automated)";
+  }
+  if (ua.includes("postman")) {
+    return "Postman Runtime Environment";
+  }
+  if (ua.includes("chrome") && (ua.includes("win") || ua.includes("windows"))) {
+    return "Chrome / Win10";
+  }
+  if (ua.includes("chrome") && ua.includes("mac")) {
+    return "Chrome / macOS";
+  }
+  if (ua.includes("firefox")) {
+    return "Firefox / Linux x86_64";
+  }
+  if (ua.includes("mozilla")) {
+    return "Chrome / Win10";
+  }
+  return rawUa.length > 36 ? `${rawUa.slice(0, 36)}...` : rawUa;
+}
+
+// Indian Standard Time (IST, UTC+5:30) Formatter: "DD MMM YYYY, HH:mm:ss IST"
+function formatIST(isoDateString) {
+  if (!isoDateString) return "N/A";
+  try {
+    const d = new Date(isoDateString);
+    if (isNaN(d.getTime())) return isoDateString;
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Kolkata",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }).formatToParts(d);
+
+    const map = {};
+    for (const p of parts) {
+      map[p.type] = p.value;
+    }
+    return `${map.day} ${map.month} ${map.year}, ${map.hour}:${map.minute}:${map.second} IST`;
+  } catch {
+    return isoDateString;
+  }
+}
+
+// Core production assets placed evenly around the center of the topology (well spaced to prevent label collisions)
 const CORE_ASSETS = [
-  { id: "core-db", label: "PROD-DB-PRIMARY", type: "PostgreSQL Database", relX: 0, relY: -0.12 },
-  { id: "core-auth", label: "AUTH-GATEWAY-01", type: "OAuth/JWT Service", relX: -0.15, relY: 0.05 },
-  { id: "core-api", label: "API-EDGE-ROUTER", type: "Core Microservice", relX: 0.15, relY: 0.05 },
-  { id: "core-vault", label: "KMS-VAULT-CLUSTER", type: "Key Management", relX: -0.08, relY: 0.18 },
-  { id: "core-worker", label: "PIPELINE-WORKER", type: "Worker Queue", relX: 0.08, relY: 0.18 },
+  { id: "core-db", label: "PROD-DB-PRIMARY", type: "PostgreSQL Database", relX: 0, relY: -0.19 },
+  { id: "core-auth", label: "AUTH-GATEWAY-01", type: "OAuth/JWT Service", relX: -0.22, relY: -0.02 },
+  { id: "core-api", label: "API-EDGE-ROUTER", type: "Core Microservice", relX: 0.22, relY: -0.02 },
+  { id: "core-vault", label: "KMS-VAULT-CLUSTER", type: "Key Management", relX: -0.12, relY: 0.18 },
+  { id: "core-worker", label: "PIPELINE-WORKER", type: "Worker Queue", relX: 0.12, relY: 0.18 },
 ];
 
 const CATEGORIES = ["secret", "database", "token", "key", "generic"];
 const PREFIXES = ["APP", "SVC", "INTERNAL", "STAGING", "BACKUP"];
 const SUFFIXES = ["SECRET_KEY", "DB_URI", "API_TOKEN", "ACCESS_KEY", "ADMIN_PASS"];
 
-// Deterministic decoy constellation generator
-function generateDecoyConstellation(count = 190) {
+// Deterministic decoy constellation generator with clear concentric zones
+function generateDecoyConstellation(count = 140) {
   const nodes = [];
+  const rings = [0.32, 0.42, 0.52];
+
   for (let i = 0; i < count; i++) {
-    const ring = Math.floor(i / (count / 4));
-    const baseRadius = 0.22 + ring * 0.16 + Math.sin(i * 99) * 0.04;
-    const angle = i * 2.39996 + Math.cos(i * 13) * 0.2;
+    const ringIndex = i % rings.length;
+    const baseRadius = rings[ringIndex] + ((i * 17) % 7) * 0.008;
+    const itemsInRing = Math.floor(count / rings.length);
+    const ringPos = Math.floor(i / rings.length);
+    const angle = (ringPos / itemsInRing) * Math.PI * 2 + (ringIndex * 0.45);
 
     const cat = CATEGORIES[i % CATEGORIES.length];
     const prefix = PREFIXES[i % PREFIXES.length];
@@ -57,10 +158,10 @@ function generateDecoyConstellation(count = 190) {
       name: `${prefix}_${cat.toUpperCase()}_${suffix}`,
       category: cat,
       relX: Math.cos(angle) * baseRadius,
-      relY: Math.sin(angle) * baseRadius * 0.72,
+      relY: Math.sin(angle) * baseRadius * 0.76,
       baseRadius,
       angle,
-      speed: Math.sin(i) * 0.0003 + 0.0002,
+      speed: 0.00015 + ((i % 5) * 0.00005),
     });
   }
   return nodes;
@@ -77,6 +178,7 @@ function GhostTopology({
   dwellMultiplier,
   onRefresh,
   isRefreshing,
+  theme = "dark",
 }) {
   const canvasRef = useRef(null);
   const [hoveredNode, setHoveredNode] = useState(null);
@@ -105,6 +207,7 @@ function GhostTopology({
     window.addEventListener("resize", resizeCanvas);
 
     let tick = 0;
+    const isLight = theme === "light";
 
     const render = () => {
       tick += 0.02;
@@ -114,10 +217,10 @@ function GhostTopology({
       const centerY = height / 2;
       const minDim = Math.min(width, height);
 
-      // Background coordinate grid
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.03)";
+      // Subtle background grid
+      ctx.strokeStyle = isLight ? "rgba(0, 0, 0, 0.04)" : "rgba(255, 255, 255, 0.02)";
       ctx.lineWidth = 1;
-      const gridSize = 40;
+      const gridSize = 48;
       for (let x = 0; x < width; x += gridSize) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
@@ -131,28 +234,14 @@ function GhostTopology({
         ctx.stroke();
       }
 
-      // Cyan radar sweep rings
-      ctx.strokeStyle = "rgba(6, 182, 212, 0.06)";
+      // Subtle concentric boundary rings
+      ctx.strokeStyle = isLight ? "rgba(217, 119, 6, 0.12)" : "rgba(6, 182, 212, 0.08)";
       ctx.lineWidth = 1;
-      [0.2, 0.38, 0.56, 0.74].forEach((ratio) => {
+      [0.32, 0.42, 0.52].forEach((radius) => {
         ctx.beginPath();
-        ctx.arc(centerX, centerY, (minDim * ratio) / 2, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, minDim * radius, 0, Math.PI * 2);
         ctx.stroke();
       });
-
-      // Rotating radar beam
-      const sweepAngle = tick * 0.35;
-      const gradient = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, minDim * 0.42);
-      gradient.addColorStop(0, "rgba(6, 182, 212, 0.09)");
-      gradient.addColorStop(1, "rgba(6, 182, 212, 0)");
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(centerX, centerY);
-      ctx.arc(centerX, centerY, minDim * 0.42, sweepAngle, sweepAngle + 0.35);
-      ctx.closePath();
-      ctx.fillStyle = gradient;
-      ctx.fill();
-      ctx.restore();
 
       // Node coordinate calculation
       const corePositions = CORE_ASSETS.map((asset) => ({
@@ -162,38 +251,22 @@ function GhostTopology({
       }));
 
       const decoyPositions = staticDecoys.map((decoy) => {
-        const currentAngle = decoy.angle + tick * decoy.speed * 20;
+        const currentAngle = decoy.angle + tick * decoy.speed * 12;
         return {
           ...decoy,
           absX: centerX + Math.cos(currentAngle) * decoy.baseRadius * minDim,
-          absY: centerY + Math.sin(currentAngle) * decoy.baseRadius * minDim * 0.72,
+          absY: centerY + Math.sin(currentAngle) * decoy.baseRadius * minDim * 0.76,
           isTriggered: triggeredTrapMap.has(decoy.trapId),
           alertData: triggeredTrapMap.get(decoy.trapId) || null,
         };
       });
 
-      // Decoy interconnection mesh links
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.035)";
+      // Clean, thin connecting lines between nearby core assets and decoys
+      ctx.strokeStyle = isLight ? "rgba(217, 119, 6, 0.16)" : "rgba(6, 182, 212, 0.12)";
       ctx.lineWidth = 0.75;
-      for (let i = 0; i < decoyPositions.length; i += 2) {
-        const nodeA = decoyPositions[i];
-        for (let j = i + 1; j < Math.min(i + 6, decoyPositions.length); j++) {
-          const nodeB = decoyPositions[j];
-          const dist = Math.hypot(nodeA.absX - nodeB.absX, nodeA.absY - nodeB.absY);
-          if (dist < minDim * 0.11) {
-            ctx.beginPath();
-            ctx.moveTo(nodeA.absX, nodeA.absY);
-            ctx.lineTo(nodeB.absX, nodeB.absY);
-            ctx.stroke();
-          }
-        }
-      }
-
-      // Core-to-decoy connections
       corePositions.forEach((core) => {
-        decoyPositions.slice(0, 14).forEach((decoy) => {
-          if (Math.hypot(core.absX - decoy.absX, core.absY - decoy.absY) < minDim * 0.16) {
-            ctx.strokeStyle = "rgba(6, 182, 212, 0.08)";
+        decoyPositions.slice(0, 16).forEach((decoy) => {
+          if (Math.hypot(core.absX - decoy.absX, core.absY - decoy.absY) < minDim * 0.22) {
             ctx.beginPath();
             ctx.moveTo(core.absX, core.absY);
             ctx.lineTo(decoy.absX, decoy.absY);
@@ -202,124 +275,124 @@ function GhostTopology({
         });
       });
 
-      // Render decoy nodes
+      // Render Active Decoys (Slate/Gray) and Tripped Traps (Red)
       decoyPositions.forEach((node) => {
         if (filterTriggeredOnly && !node.isTriggered) return;
 
         if (node.isTriggered) {
-          const pulseR = 8 + Math.abs(Math.sin(tick * 3)) * 14;
+          // Tripped Traps = Red (Clean pulse ring without visual debris)
+          const pulseR = 8 + Math.abs(Math.sin(tick * 2.5)) * 6;
           ctx.beginPath();
           ctx.arc(node.absX, node.absY, pulseR, 0, Math.PI * 2);
-          ctx.strokeStyle = "rgba(244, 63, 94, 0.4)";
+          ctx.strokeStyle = "rgba(239, 68, 68, 0.35)";
           ctx.lineWidth = 1.5;
           ctx.stroke();
 
           ctx.beginPath();
-          ctx.arc(node.absX, node.absY, pulseR + 8, 0, Math.PI * 2);
-          ctx.strokeStyle = "rgba(244, 63, 94, 0.15)";
-          ctx.lineWidth = 1;
-          ctx.stroke();
-
-          ctx.beginPath();
           ctx.arc(node.absX, node.absY, 5, 0, Math.PI * 2);
-          ctx.fillStyle = "#f43f5e";
+          ctx.fillStyle = "#ef4444";
           ctx.fill();
 
-          ctx.fillStyle = "#f43f5e";
-          ctx.font = "500 10px monospace";
-          ctx.fillText(`TRIPPED: ${node.trapId}`, node.absX + 9, node.absY - 6);
+          // Clean, high-contrast label with pill background to avoid text clipping
+          const labelText = `TRIPPED: ${node.trapId}`;
+          ctx.font = "600 10px monospace";
+          const textWidth = ctx.measureText(labelText).width;
+          const boxX = node.absX + 8;
+          const boxY = node.absY - 14;
+
+          ctx.fillStyle = isLight ? "rgba(255, 255, 255, 0.95)" : "rgba(15, 23, 42, 0.85)";
+          ctx.fillRect(boxX - 4, boxY - 9, textWidth + 8, 16);
+          ctx.strokeStyle = "rgba(239, 68, 68, 0.5)";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(boxX - 4, boxY - 9, textWidth + 8, 16);
+
+          ctx.fillStyle = isLight ? "#dc2626" : "#fca5a5";
+          ctx.fillText(labelText, boxX, boxY + 3);
         } else {
+          // Active Decoys = Slate/Gray (Crisp, clean, subtle dots)
           ctx.beginPath();
-          ctx.arc(node.absX, node.absY, 2.2, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(148, 163, 184, 0.28)";
+          ctx.arc(node.absX, node.absY, 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = isLight ? "rgba(100, 116, 139, 0.45)" : "rgba(148, 163, 184, 0.35)";
           ctx.fill();
         }
       });
 
-      // Render attack vectors
+      // Clean attack vector indicators (Thin, restrained dashed red line)
       let vectorIndex = 0;
       decoyPositions.forEach((node) => {
         if (!node.isTriggered || !node.alertData) return;
 
         const attackerAngle = vectorIndex * 1.57 + 0.5;
-        const attackerX = centerX + Math.cos(attackerAngle) * (minDim * 0.47);
-        const attackerY = centerY + Math.sin(attackerAngle) * (minDim * 0.44);
+        const attackerX = centerX + Math.cos(attackerAngle) * (minDim * 0.49);
+        const attackerY = centerY + Math.sin(attackerAngle) * (minDim * 0.45);
         vectorIndex++;
 
+        // Attacker origin point
         ctx.beginPath();
-        ctx.arc(attackerX, attackerY, 6, 0, Math.PI * 2);
-        ctx.fillStyle = "#f43f5e";
+        ctx.arc(attackerX, attackerY, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "#ef4444";
         ctx.fill();
 
+        ctx.strokeStyle = "rgba(239, 68, 68, 0.25)";
+        ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.arc(attackerX, attackerY, 11, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(244, 63, 94, 0.4)";
-        ctx.lineWidth = 1.5;
+        ctx.arc(attackerX, attackerY, 9, 0, Math.PI * 2);
         ctx.stroke();
 
-        ctx.fillStyle = "#f43f5e";
-        ctx.font = "600 10px sans-serif";
-        const attackerIp = node.alertData.source_ip || node.alertData.ip || "Attacker Ingress";
-        ctx.fillText(`THREAT INGRESS [${attackerIp}]`, attackerX - 60, attackerY - 14);
-
+        // Subtle, thin dashed line from attacker to tripped trap
         ctx.save();
-        ctx.setLineDash([6, 6]);
-        ctx.lineDashOffset = -tick * 30;
-        ctx.strokeStyle = "rgba(244, 63, 94, 0.75)";
-        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.lineDashOffset = -tick * 15;
+        ctx.strokeStyle = "rgba(239, 68, 68, 0.4)";
+        ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(attackerX, attackerY);
         ctx.lineTo(node.absX, node.absY);
         ctx.stroke();
         ctx.restore();
-
-        const packetRatio = (tick * 0.65) % 1;
-        const packetX = attackerX + (node.absX - attackerX) * packetRatio;
-        const packetY = attackerY + (node.absY - attackerY) * packetRatio;
-
-        ctx.beginPath();
-        ctx.arc(packetX, packetY, 3.5, 0, Math.PI * 2);
-        ctx.fillStyle = "#ffffff";
-        ctx.fill();
-
-        const midX = (attackerX + node.absX) / 2;
-        const midY = (attackerY + node.absY) / 2;
-        ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
-        ctx.fillRect(midX - 48, midY - 10, 96, 20);
-        ctx.strokeStyle = "rgba(244, 63, 94, 0.3)";
-        ctx.strokeRect(midX - 48, midY - 10, 96, 20);
-        ctx.fillStyle = "#f43f5e";
-        ctx.font = "500 9px monospace";
-        ctx.fillText("TARPIT ENGAGED", midX - 38, midY + 3);
       });
 
-      // Render core assets
+      // Render Core Assets = Blue / Accent (Clean AWS/DataDog architecture style)
       corePositions.forEach((core) => {
-        const halo = ctx.createRadialGradient(core.absX, core.absY, 4, core.absX, core.absY, 24);
-        halo.addColorStop(0, "rgba(6, 182, 212, 0.3)");
-        halo.addColorStop(1, "rgba(6, 182, 212, 0)");
-        ctx.fillStyle = halo;
+        // Soft outer glow
+        const glow = ctx.createRadialGradient(core.absX, core.absY, 4, core.absX, core.absY, 20);
+        glow.addColorStop(0, isLight ? "rgba(217, 119, 6, 0.25)" : "rgba(59, 130, 246, 0.25)");
+        glow.addColorStop(1, isLight ? "rgba(217, 119, 6, 0)" : "rgba(59, 130, 246, 0)");
+        ctx.fillStyle = glow;
         ctx.beginPath();
-        ctx.arc(core.absX, core.absY, 24, 0, Math.PI * 2);
+        ctx.arc(core.absX, core.absY, 20, 0, Math.PI * 2);
         ctx.fill();
 
+        // Node circle
         ctx.beginPath();
-        ctx.arc(core.absX, core.absY, 12, 0, Math.PI * 2);
-        ctx.fillStyle = "#090d16";
+        ctx.arc(core.absX, core.absY, 9, 0, Math.PI * 2);
+        ctx.fillStyle = isLight ? "#ffffff" : "#0f172a";
         ctx.fill();
-        ctx.strokeStyle = "#38bdf8";
+        ctx.strokeStyle = isLight ? "#d97706" : "#3b82f6";
         ctx.lineWidth = 2;
         ctx.stroke();
 
+        // Inner core dot
         ctx.beginPath();
-        ctx.arc(core.absX, core.absY, 4, 0, Math.PI * 2);
-        ctx.fillStyle = "#38bdf8";
+        ctx.arc(core.absX, core.absY, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = isLight ? "#b45309" : "#60a5fa";
         ctx.fill();
 
-        ctx.fillStyle = "#e2e8f0";
-        ctx.font = "600 10px sans-serif";
+        // Floating pill label with clean background to completely avoid overlap
+        ctx.font = "600 11px sans-serif";
+        const labelWidth = ctx.measureText(core.label).width;
+        const pillX = core.absX - labelWidth / 2 - 8;
+        const pillY = core.absY + 16;
+
+        ctx.fillStyle = isLight ? "rgba(255, 255, 255, 0.95)" : "rgba(15, 23, 42, 0.9)";
+        ctx.fillRect(pillX, pillY, labelWidth + 16, 20);
+        ctx.strokeStyle = isLight ? "rgba(217, 119, 6, 0.35)" : "rgba(59, 130, 246, 0.3)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(pillX, pillY, labelWidth + 16, 20);
+
+        ctx.fillStyle = isLight ? "#92400e" : "#93c5fd";
         ctx.textAlign = "center";
-        ctx.fillText(core.label, core.absX, core.absY + 22);
+        ctx.fillText(core.label, core.absX, pillY + 14);
         ctx.textAlign = "left";
       });
 
@@ -377,92 +450,171 @@ function GhostTopology({
       window.removeEventListener("resize", resizeCanvas);
       canvas.removeEventListener("mousemove", handleMouseMove);
     };
-  }, [staticDecoys, triggeredTrapMap, filterTriggeredOnly]);
+  }, [staticDecoys, triggeredTrapMap, filterTriggeredOnly, theme]);
+
+  const isLight = theme === "light";
 
   return (
     <div className="space-y-6">
       {/* Live Stats HUD Bar */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="backdrop-blur-xl bg-neutral-900/40 border border-white/8 rounded-2xl p-5 shadow-xl shadow-black/20 hover:border-white/12 transition-all">
+        <div className={`backdrop-blur-xl border rounded-2xl p-5 shadow-xl transition-all duration-200 ${
+          isLight
+            ? "bg-white/85 border-slate-200/90 shadow-slate-200/40 text-slate-900"
+            : "bg-neutral-900/40 border-white/8 shadow-black/20 text-neutral-200"
+        }`}>
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-400">
+            <span className={`text-[11px] font-medium uppercase tracking-wider ${
+              isLight ? "text-slate-500" : "text-neutral-400"
+            }`}>
               Active Deception Surface
             </span>
-            <div className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400">
+            <div className={`p-1.5 rounded-lg ${
+              isLight ? "bg-amber-500/10 text-amber-600" : "bg-cyan-500/10 text-cyan-400"
+            }`}>
               <Layers className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-semibold tracking-tight text-white">{deceptionRatio}% Density</div>
-            <div className="text-xs text-neutral-500 font-mono mt-1">
+            <div className={`text-2xl font-semibold tracking-tight ${
+              isLight ? "text-slate-900" : "text-white"
+            }`}>
+              {deceptionRatio}% Density
+            </div>
+            <div className={`text-xs font-mono mt-1 ${
+              isLight ? "text-slate-500" : "text-neutral-500"
+            }`}>
               {totalDecoysCount} Decoy Entities vs {coreAssetsCount} Core
             </div>
           </div>
         </div>
 
-        <div className="backdrop-blur-xl bg-neutral-900/40 border border-white/8 rounded-2xl p-5 shadow-xl shadow-black/20 hover:border-white/12 transition-all">
+        <div className={`backdrop-blur-xl border rounded-2xl p-5 shadow-xl transition-all duration-200 ${
+          isLight
+            ? "bg-white/85 border-slate-200/90 shadow-slate-200/40 text-slate-900"
+            : "bg-neutral-900/40 border-white/8 shadow-black/20 text-neutral-200"
+        }`}>
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-400">
+            <span className={`text-[11px] font-medium uppercase tracking-wider ${
+              isLight ? "text-slate-500" : "text-neutral-400"
+            }`}>
               Attacker Dwell Time Multiplier
             </span>
-            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
+            <div className={`p-1.5 rounded-lg ${
+              isLight ? "bg-amber-500/10 text-amber-600" : "bg-amber-500/10 text-amber-400"
+            }`}>
               <Crosshair className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-semibold tracking-tight text-amber-300">{dwellMultiplier}</div>
-            <div className="text-xs text-neutral-500 font-mono mt-1">Behavioral Tarpit Injected</div>
+            <div className={`text-2xl font-semibold tracking-tight ${
+              isLight ? "text-amber-700" : "text-amber-300"
+            }`}>
+              {dwellMultiplier}
+            </div>
+            <div className={`text-xs font-mono mt-1 ${
+              isLight ? "text-slate-500" : "text-neutral-500"
+            }`}>
+              Behavioral Tarpit Injected
+            </div>
           </div>
         </div>
 
-        <div className="backdrop-blur-xl bg-neutral-900/40 border border-white/8 rounded-2xl p-5 shadow-xl shadow-black/20 hover:border-white/12 transition-all">
+        <div className={`backdrop-blur-xl border rounded-2xl p-5 shadow-xl transition-all duration-200 ${
+          isLight
+            ? "bg-white/85 border-slate-200/90 shadow-slate-200/40 text-slate-900"
+            : "bg-neutral-900/40 border-white/8 shadow-black/20 text-neutral-200"
+        }`}>
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-400">
+            <span className={`text-[11px] font-medium uppercase tracking-wider ${
+              isLight ? "text-slate-500" : "text-neutral-400"
+            }`}>
               Neutralized Threats
             </span>
-            <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400">
+            <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-500">
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-semibold tracking-tight text-rose-400">{alerts.length} Tripped Traps</div>
-            <div className="text-xs text-neutral-500 font-mono mt-1">Suspended & Entangled in Mesh</div>
+            <div className="text-2xl font-semibold tracking-tight text-rose-500">
+              {alerts.length} Tripped Traps
+            </div>
+            <div className={`text-xs font-mono mt-1 ${
+              isLight ? "text-slate-500" : "text-neutral-500"
+            }`}>
+              Suspended & Entangled in Mesh
+            </div>
           </div>
         </div>
       </div>
 
       {/* Interactive Canvas Graph Container */}
-      <div className="relative backdrop-blur-xl bg-neutral-900/40 border border-white/8 rounded-2xl overflow-hidden h-155 w-full shadow-2xl shadow-black/40">
+      <div className={`relative backdrop-blur-xl border rounded-2xl overflow-hidden h-155 w-full shadow-2xl transition-all duration-200 ${
+        isLight
+          ? "bg-white/75 border-slate-200/90 shadow-slate-200/50"
+          : "bg-neutral-900/40 border-white/8 shadow-black/40"
+      }`}>
         <canvas ref={canvasRef} className="w-full h-full block cursor-crosshair" />
 
-        {/* Top-Left Tactical HUD Overlay */}
-        <div className="absolute top-4 left-4 pointer-events-none space-y-2">
-          <div className="backdrop-blur-md bg-neutral-950/70 border border-white/8 rounded-xl px-4 py-2.5 shadow-lg">
-            <div className="text-xs font-semibold text-white flex items-center gap-2">
-              <Radar className="w-3.5 h-3.5 text-cyan-400 animate-spin" />
-              DECEPTION TOPOLOGY // REAL-TIME MESH
+        {/* Top-Left Tactical HUD Overlay & Simplified 3-Status Legend */}
+        <div className="absolute top-4 left-4 pointer-events-none space-y-2.5">
+          <div className={`backdrop-blur-md border rounded-xl px-4 py-2.5 shadow-lg ${
+            isLight
+              ? "bg-white/95 border-slate-200 text-slate-900"
+              : "bg-neutral-950/80 border-white/8 text-white"
+          }`}>
+            <div className="text-xs font-semibold flex items-center gap-2">
+              <Radar className={`w-3.5 h-3.5 ${isLight ? "text-amber-600" : "text-cyan-400"}`} />
+              <span>ACTIVE DECEPTION TOPOLOGY</span>
             </div>
-            <div className="text-[10px] text-neutral-400 font-mono mt-0.5">
-              SURFACE: {totalDecoysCount} NODES | ORBITAL MESH ACTIVE
+            <div className={`text-[10px] font-mono mt-0.5 ${isLight ? "text-slate-500" : "text-neutral-400"}`}>
+              {totalDecoysCount} Decoy Nodes Shielding {coreAssetsCount} Core Assets
             </div>
           </div>
 
-          <div className="backdrop-blur-md bg-neutral-950/70 border border-white/8 rounded-xl p-3 text-[11px] space-y-2 shadow-lg">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 border border-cyan-300" />
-              <span className="text-neutral-300">Core Production Asset</span>
+          {/* Clean 3-Status Legend Card */}
+          <div className={`backdrop-blur-md border rounded-xl p-3 text-xs space-y-2 shadow-lg ${
+            isLight
+              ? "bg-white/95 border-slate-200 text-slate-900"
+              : "bg-neutral-950/80 border-white/8 text-white"
+          }`}>
+            <div className={`text-[10px] uppercase font-mono font-semibold tracking-wider mb-1 ${
+              isLight ? "text-slate-500" : "text-neutral-400"
+            }`}>
+              Network Status Key
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-slate-400/40" />
-              <span className="text-neutral-400">Silent Ghost Decoy</span>
+            <div className="flex items-center gap-2.5">
+              <span className={`w-3 h-3 rounded-full shrink-0 border ${
+                isLight ? "bg-amber-500 border-amber-600" : "bg-blue-500 border-blue-400"
+              }`} />
+              <div className="leading-tight">
+                <span className={`font-medium ${isLight ? "text-slate-900" : "text-white"}`}>
+                  {isLight ? "Amber" : "Blue"}
+                </span>
+                <span className={`text-[11px] block ${isLight ? "text-slate-500" : "text-neutral-400"}`}>
+                  Core Assets (Production Servers & DBs)
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
-              <span className="text-rose-400 font-medium">Compromised Canary Trap</span>
+            <div className="flex items-center gap-2.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-slate-400/50 shrink-0" />
+              <div className="leading-tight">
+                <span className={`font-medium ${isLight ? "text-slate-900" : "text-white"}`}>
+                  Slate / Gray
+                </span>
+                <span className={`text-[11px] block ${isLight ? "text-slate-500" : "text-neutral-400"}`}>
+                  Active Decoys (Unarmed & Listening)
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-4 h-0.5 bg-rose-500 border-t border-dashed border-rose-500" />
-              <span className="text-rose-400">Active Threat Ingress Vector</span>
+            <div className="flex items-center gap-2.5">
+              <span className="w-3 h-3 rounded-full bg-rose-500 border border-rose-400 animate-pulse shrink-0" />
+              <div className="leading-tight">
+                <span className="text-rose-500 font-medium">Red</span>
+                <span className={`text-[11px] block ${isLight ? "text-slate-500" : "text-neutral-400"}`}>
+                  Tripped Traps (Attacker Entangled in Tarpit)
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -473,53 +625,105 @@ function GhostTopology({
             onClick={() => setFilterTriggeredOnly((prev) => !prev)}
             className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-all duration-200 cursor-pointer backdrop-blur-md ${
               filterTriggeredOnly
-                ? "bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-sm"
+                ? "bg-rose-500/20 text-rose-500 border-rose-500/40 shadow-xs"
+                : isLight
+                ? "bg-white/90 text-slate-700 border-slate-200 hover:bg-slate-100"
                 : "bg-neutral-950/70 text-neutral-400 border-white/8 hover:text-white hover:bg-white/4"
             }`}
           >
-            {filterTriggeredOnly ? "Showing Triggered Only" : "Show All Nodes"}
+            {filterTriggeredOnly ? "Showing Tripped Traps Only" : "Show All Nodes"}
           </button>
           <button
             onClick={onRefresh}
             disabled={isRefreshing}
-            className="bg-neutral-950/70 hover:bg-white/4 text-cyan-400 border border-cyan-500/30 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 flex items-center gap-1.5 cursor-pointer backdrop-blur-md shadow-sm"
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 flex items-center gap-1.5 cursor-pointer backdrop-blur-md shadow-xs ${
+              isLight
+                ? "bg-white/90 text-amber-700 border border-amber-500/30 hover:bg-amber-50/50"
+                : "bg-neutral-950/70 text-cyan-400 border border-cyan-500/30 hover:bg-white/4"
+            }`}
           >
             <RefreshCw className={`w-3 h-3 ${isRefreshing ? "animate-spin" : ""}`} />
             Sync Topology
           </button>
         </div>
 
-        {/* Node Inspector Tooltip */}
+        {/* Node Inspector Tooltip - Simplified, Clean DataDog/Linear Style */}
         {hoveredNode && (
           <div
-            className="absolute pointer-events-none backdrop-blur-xl bg-neutral-900/90 border border-cyan-500/40 p-3 rounded-xl shadow-2xl text-xs space-y-1 z-20"
+            className={`absolute pointer-events-none backdrop-blur-xl border p-3 rounded-xl shadow-2xl text-xs space-y-1 z-20 min-w-48 ${
+              isLight
+                ? "bg-white/95 border-slate-200 text-slate-800"
+                : "bg-neutral-950/95 border-white/10 text-white"
+            }`}
             style={{
-              left: Math.min(hoveredNode.x + 16, 780),
-              top: Math.min(hoveredNode.y + 16, 480),
+              left: Math.min(hoveredNode.x + 16, 760),
+              top: Math.min(hoveredNode.y + 16, 470),
             }}
           >
-            <div className="font-semibold text-white">{hoveredNode.name}</div>
-            <div className="text-[11px] text-neutral-400">{hoveredNode.type}</div>
-            <div className="text-[11px] text-neutral-300 font-mono">Class: {hoveredNode.category}</div>
-            <div className={`text-[11px] font-medium ${hoveredNode.isTriggered ? "text-rose-400" : "text-cyan-400"}`}>
-              State: {hoveredNode.status}
+            <div className={`font-semibold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
+              {hoveredNode.name}
             </div>
-            {hoveredNode.tarpit && <div className="text-[10px] text-amber-300 font-mono">{hoveredNode.tarpit}</div>}
+            <div className={`text-[11px] ${isLight ? "text-slate-500" : "text-neutral-400"}`}>
+              {hoveredNode.type}
+            </div>
+            <div className={`text-[11px] font-mono ${isLight ? "text-slate-600" : "text-neutral-300"}`}>
+              Class: {hoveredNode.category}
+            </div>
+            <div className={`text-[11px] font-medium ${
+              hoveredNode.isTriggered ? "text-rose-500" : isLight ? "text-amber-600" : "text-cyan-400"
+            }`}>
+              Status: {hoveredNode.status}
+            </div>
+            {hoveredNode.tarpit && (
+              <div className={`text-[10px] font-mono pt-0.5 border-t mt-1 ${
+                isLight ? "text-amber-700 border-slate-200" : "text-amber-300 border-white/10"
+              }`}>
+                Tarpit Delay: {hoveredNode.tarpit}
+              </div>
+            )}
           </div>
         )}
 
         {/* Bottom Telemetry Bar */}
-        <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-[11px] text-neutral-500 pointer-events-none font-mono">
+        <div className={`absolute bottom-3 left-4 right-4 flex items-center justify-between text-[11px] pointer-events-none font-mono ${
+          isLight ? "text-slate-500" : "text-neutral-500"
+        }`}>
           <span>MESH ENCRYPTION: SHA-256 CANARY TOKENS</span>
-          <span className="text-cyan-400">BEHAVIORAL TARPIT RADAR ENGAGED</span>
+          <span className={isLight ? "text-amber-700 font-semibold" : "text-cyan-400"}>
+            BEHAVIORAL TARPIT RADAR ENGAGED
+          </span>
         </div>
       </div>
     </div>
   );
 }
 
+// Theme store synchronization helpers
+function subscribeTheme(callback) {
+  window.addEventListener("spectresync-theme-change", callback);
+  window.addEventListener("storage", callback);
+  return () => {
+    window.removeEventListener("spectresync-theme-change", callback);
+    window.removeEventListener("storage", callback);
+  };
+}
+
+function getThemeSnapshot() {
+  try {
+    const val = localStorage.getItem("spectresync-theme");
+    return val === "light" ? "light" : "dark";
+  } catch {
+    return "dark";
+  }
+}
+
+function getThemeServerSnapshot() {
+  return "dark";
+}
+
 // Main Dashboard Component
 export default function SpectreSyncDashboard() {
+  const theme = useSyncExternalStore(subscribeTheme, getThemeSnapshot, getThemeServerSnapshot);
   const [activeTab, setActiveTab] = useState("deploy");
   const [targetPath, setTargetPath] = useState("");
   const [isDeploying, setIsDeploying] = useState(false);
@@ -529,9 +733,31 @@ export default function SpectreSyncDashboard() {
   const [alerts, setAlerts] = useState([]);
   const [testingTrapId, setTestingTrapId] = useState(null);
   const [toastNotification, setToastNotification] = useState(null);
+  const redirectTimerRef = useRef(null);
   const [sentinelMode, setSentinelMode] = useState("autonomous"); // "autonomous" | "supervised"
   const [sentinelStatus, setSentinelStatus] = useState("Monitoring Perimeter");
   const [pendingApproval, setPendingApproval] = useState(null);
+
+  // Synchronize root HTML class when theme changes
+  useEffect(() => {
+    if (theme === "light") {
+      document.documentElement.classList.add("light");
+      document.documentElement.classList.remove("dark");
+    } else {
+      document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    try {
+      localStorage.setItem("spectresync-theme", next);
+      window.dispatchEvent(new Event("spectresync-theme-change"));
+    } catch {
+      // ignore
+    }
+  };
   const [agentThoughts, setAgentThoughts] = useState([
     {
       time: "20:48:02",
@@ -839,79 +1065,87 @@ export default function SpectreSyncDashboard() {
     if (alerts.length === 0) return "1.0x (Baseline)";
     const totalTarpitSeconds = alerts.reduce((acc, curr) => acc + (curr.tarpit_duration || 3500) / 1000, 0);
     const avgMult = Math.max(2.4, (totalTarpitSeconds / alerts.length) * 3.8);
-    return `${avgMult.toFixed(1)}x Tarpit Retardation`;
+    return `${avgMult.toFixed(1)}x Tarpit Delay Injection`;
   }, [alerts]);
 
+  const isLight = theme === "light";
+
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-200 font-sans selection:bg-cyan-500/20 selection:text-cyan-200 relative overflow-x-hidden pb-20">
+    <div
+      className={`min-h-screen font-sans relative overflow-x-hidden pb-28 transition-colors duration-200 ${
+        isLight
+          ? "bg-[#f8fafc] text-slate-900 selection:bg-amber-500/20 selection:text-amber-900"
+          : "bg-[#090d16] text-neutral-200 selection:bg-cyan-500/20 selection:text-cyan-200"
+      }`}
+    >
       {/* Ambient top gradient glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-[radial-gradient(ellipse_60%_40%_at_50%_0%,rgba(6,182,212,0.1),rgba(255,255,255,0))] pointer-events-none" />
+      <div
+        className={`absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 pointer-events-none ${
+          isLight
+            ? "bg-[radial-gradient(ellipse_60%_40%_at_50%_0%,rgba(217,119,6,0.08),rgba(255,255,255,0))]"
+            : "bg-[radial-gradient(ellipse_60%_40%_at_50%_0%,rgba(6,182,212,0.1),rgba(255,255,255,0))]"
+        }`}
+      />
 
       {/* Floating Top Command Bar */}
-      <header className="sticky top-4 z-40 mx-auto max-w-7xl px-4 mb-8">
-        <div className="backdrop-blur-xl bg-neutral-900/60 border border-white/8 shadow-2xl shadow-black/40 rounded-2xl px-5 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <header className="sticky top-4 z-40 mx-auto max-w-7xl px-4 mb-6">
+        <div
+          className={`backdrop-blur-xl border shadow-2xl rounded-2xl px-5 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-4 transition-all duration-200 ${
+            isLight
+              ? "bg-white/85 border-slate-200/90 shadow-slate-200/50"
+              : "bg-[#0f172a]/70 border-white/10 shadow-black/50"
+          }`}
+        >
+          {/* Logo & Brand Identity */}
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 shadow-inner">
+            <div
+              className={`p-2 rounded-xl border shadow-inner ${
+                isLight
+                  ? "bg-amber-500/10 border-amber-500/25 text-amber-600"
+                  : "bg-cyan-500/10 border-cyan-500/20 text-cyan-400"
+              }`}
+            >
               <Shield className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm tracking-tight text-white">SPECTRESYNC</span>
-                <span className="text-[10px] uppercase tracking-wider font-mono text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-full">
+                <span
+                  className={`font-semibold text-sm tracking-tight ${
+                    isLight ? "text-slate-900" : "text-white"
+                  }`}
+                >
+                  SPECTRESYNC
+                </span>
+                <span
+                  className={`text-[10px] uppercase tracking-wider font-mono px-2 py-0.5 rounded-full border ${
+                    isLight
+                      ? "text-amber-700 bg-amber-500/10 border-amber-500/25"
+                      : "text-cyan-400 bg-cyan-500/10 border-cyan-500/20"
+                  }`}
+                >
                   Autonomous Mesh
                 </span>
               </div>
-              <p className="text-[11px] text-neutral-400 mt-0.5">
+              <p
+                className={`text-[11px] mt-0.5 ${
+                  isLight ? "text-slate-500" : "text-neutral-400"
+                }`}
+              >
                 Active Defense · Dynamic Trap Synthesis · Threat Entanglement
               </p>
             </div>
           </div>
 
-          {/* Navigation Segmented Control */}
-          <div className="flex items-center gap-1 bg-neutral-950/70 border border-white/6 p-1 rounded-xl">
-            <button
-              onClick={() => setActiveTab("deploy")}
-              className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
-                activeTab === "deploy"
-                  ? "bg-white/8 text-white shadow-sm border border-white/8"
-                  : "text-neutral-400 hover:text-neutral-200 hover:bg-white/2"
+          {/* Right Header Controls: Mode Switcher, Live Sentinel Status, Sync Data, Theme Toggle */}
+          <div className="flex items-center flex-wrap gap-2.5">
+            {/* Autonomous vs Supervised Defense Mode Switcher */}
+            <div
+              className={`flex items-center p-0.5 rounded-xl text-xs border ${
+                isLight
+                  ? "bg-slate-100 border-slate-200"
+                  : "bg-neutral-950/70 border-white/8"
               }`}
             >
-              <Zap className="w-3.5 h-3.5" />
-              Mesh Deployment
-            </button>
-            <button
-              onClick={() => setActiveTab("topology")}
-              className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
-                activeTab === "topology"
-                  ? "bg-white/8 text-white shadow-sm border border-white/8"
-                  : "text-neutral-400 hover:text-neutral-200 hover:bg-white/2"
-              }`}
-            >
-              <Radar className="w-3.5 h-3.5" />
-              Ghost Topology
-            </button>
-            <button
-              onClick={() => setActiveTab("soc")}
-              className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
-                activeTab === "soc"
-                  ? "bg-white/8 text-white shadow-sm border border-white/8"
-                  : "text-neutral-400 hover:text-neutral-200 hover:bg-white/2"
-              }`}
-            >
-              <Activity className="w-3.5 h-3.5" />
-              Threat Feed
-              {alerts.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-rose-500/20 text-rose-400 border border-rose-500/30">
-                  {alerts.length}
-                </span>
-              )}
-            </button>
-          </div>
-
-          {/* Autonomous vs Supervised Defense Mode Switcher & Status Pill */}
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center bg-neutral-950/70 border border-white/6 p-0.5 rounded-xl text-xs">
               <button
                 onClick={() => {
                   setSentinelMode("autonomous");
@@ -923,12 +1157,16 @@ export default function SpectreSyncDashboard() {
                 }}
                 className={`px-3 py-1 rounded-lg font-medium transition-all duration-200 flex items-center gap-1.5 cursor-pointer ${
                   sentinelMode === "autonomous"
-                    ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 shadow-sm"
+                    ? isLight
+                      ? "bg-amber-500/20 text-amber-800 border border-amber-500/30 shadow-xs"
+                      : "bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 shadow-sm"
+                    : isLight
+                    ? "text-slate-600 hover:text-slate-900"
                     : "text-neutral-400 hover:text-white"
                 }`}
                 title="Autonomous Mode: Sentinel detects, synthesizes, and tarpits threats with 0 human intervention"
               >
-                <Cpu className="w-3 h-3 text-cyan-400" />
+                <Cpu className={`w-3 h-3 ${isLight ? "text-amber-600" : "text-cyan-400"}`} />
                 <span>Autonomous</span>
               </button>
               <button
@@ -942,21 +1180,74 @@ export default function SpectreSyncDashboard() {
                 }}
                 className={`px-3 py-1 rounded-lg font-medium transition-all duration-200 flex items-center gap-1.5 cursor-pointer ${
                   sentinelMode === "supervised"
-                    ? "bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-sm"
+                    ? isLight
+                      ? "bg-amber-500/20 text-amber-800 border border-amber-500/30 shadow-xs"
+                      : "bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-sm"
+                    : isLight
+                    ? "text-slate-600 hover:text-slate-900"
                     : "text-neutral-400 hover:text-white"
                 }`}
                 title="Supervised Mode: Sentinel drafts proposals and requires operator approval before deploying"
               >
-                <Sliders className="w-3 h-3 text-amber-400" />
+                <Sliders className={`w-3 h-3 ${isLight ? "text-amber-600" : "text-amber-400"}`} />
                 <span>Supervised</span>
               </button>
             </div>
 
             {/* Live Sentinel status indicator pill */}
-            <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+            <div
+              className={`hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border ${
+                isLight
+                  ? "bg-amber-500/10 text-amber-800 border-amber-500/25"
+                  : "bg-cyan-500/10 text-cyan-300 border-cyan-500/20"
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full animate-ping ${
+                  isLight ? "bg-amber-600" : "bg-cyan-400"
+                }`}
+              />
               <span>{sentinelStatus}</span>
             </div>
+
+            {/* Manual Sync Telemetry Button */}
+            <button
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all flex items-center gap-1.5 cursor-pointer shadow-xs ${
+                isLight
+                  ? "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700"
+                  : "bg-neutral-950/60 hover:bg-white/5 border-white/8 text-neutral-300 hover:text-white"
+              }`}
+              title="Synchronize fresh telemetry and alert logs"
+            >
+              <RefreshCw
+                className={`w-3 h-3 ${
+                  isRefreshing
+                    ? `animate-spin ${isLight ? "text-amber-600" : "text-cyan-400"}`
+                    : ""
+                }`}
+              />
+              <span className="hidden sm:inline">Sync Data</span>
+            </button>
+
+            {/* Theme Toggle Button (Sun / Moon) */}
+            <button
+              onClick={toggleTheme}
+              className={`p-1.5 rounded-xl border transition-all duration-200 cursor-pointer shadow-xs flex items-center justify-center ${
+                isLight
+                  ? "bg-slate-100 hover:bg-slate-200 border-slate-200 text-amber-600"
+                  : "bg-neutral-950/70 hover:bg-white/5 border-white/10 text-cyan-400"
+              }`}
+              title={isLight ? "Switch to Dark Mode" : "Switch to Light Mode"}
+              aria-label="Toggle Theme"
+            >
+              {isLight ? (
+                <Moon className="w-4 h-4 text-slate-700" />
+              ) : (
+                <Sun className="w-4 h-4 text-amber-400" />
+              )}
+            </button>
           </div>
         </div>
       </header>
@@ -968,7 +1259,9 @@ export default function SpectreSyncDashboard() {
           <div
             className={`transition-all duration-300 backdrop-blur-xl border rounded-2xl p-4 shadow-2xl flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 ${
               toastNotification.error
-                ? "bg-rose-950/60 border-rose-500/30 text-rose-200 shadow-rose-950/40"
+                ? "bg-rose-950/70 border-rose-500/40 text-rose-200 shadow-rose-950/40"
+                : isLight
+                ? "bg-white/95 border-amber-500/30 text-slate-800 shadow-amber-900/10"
                 : "bg-cyan-950/60 border-cyan-500/30 text-cyan-200 shadow-cyan-950/40"
             }`}
           >
@@ -977,6 +1270,8 @@ export default function SpectreSyncDashboard() {
                 className={`p-2 rounded-xl border ${
                   toastNotification.error
                     ? "bg-rose-500/10 border-rose-500/30 text-rose-400"
+                    : isLight
+                    ? "bg-amber-500/15 border-amber-500/30 text-amber-700"
                     : "bg-cyan-500/10 border-cyan-500/30 text-cyan-400"
                 }`}
               >
@@ -988,22 +1283,48 @@ export default function SpectreSyncDashboard() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-xs tracking-wide uppercase text-white">
+                  <span
+                    className={`font-semibold text-xs tracking-wide uppercase ${
+                      isLight ? "text-slate-900" : "text-white"
+                    }`}
+                  >
                     {toastNotification.title}
                   </span>
                   {toastNotification.trapId && (
-                    <span className="px-2 py-0.5 rounded-full font-mono text-[10px] bg-cyan-500/20 border border-cyan-500/40 text-cyan-300">
+                    <span
+                      className={`px-2 py-0.5 rounded-full font-mono text-[10px] border ${
+                        isLight
+                          ? "bg-amber-500/15 border-amber-500/30 text-amber-800"
+                          : "bg-cyan-500/20 border-cyan-500/40 text-cyan-300"
+                      }`}
+                    >
                       {toastNotification.trapId}
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-neutral-300 mt-0.5">{toastNotification.message}</p>
+                <p
+                  className={`text-xs mt-0.5 ${
+                    isLight ? "text-slate-600" : "text-neutral-300"
+                  }`}
+                >
+                  {toastNotification.message}
+                </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-neutral-900/80 border border-white/10 text-[11px] font-mono text-neutral-400">
-                <RefreshCw className="w-3 h-3 text-cyan-400 animate-spin" />
+              <div
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg border text-[11px] font-mono ${
+                  isLight
+                    ? "bg-slate-100 border-slate-200 text-slate-600"
+                    : "bg-neutral-900/80 border-white/10 text-neutral-400"
+                }`}
+              >
+                <RefreshCw
+                  className={`w-3 h-3 animate-spin ${
+                    isLight ? "text-amber-600" : "text-cyan-400"
+                  }`}
+                />
                 <span>Redirecting...</span>
               </div>
             </div>
@@ -1015,17 +1336,37 @@ export default function SpectreSyncDashboard() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Target Repository Input Card */}
-              <div className="lg:col-span-2 backdrop-blur-xl bg-neutral-900/40 border border-white/8 rounded-2xl p-6 shadow-xl shadow-black/20 hover:border-white/12 transition-all duration-200 space-y-4">
+              <div
+                className={`lg:col-span-2 backdrop-blur-xl border rounded-2xl p-6 shadow-xl transition-all duration-200 space-y-4 ${
+                  isLight
+                    ? "bg-white/85 border-slate-200/90 shadow-slate-200/50"
+                    : "bg-neutral-900/40 border-white/8 shadow-black/20"
+                }`}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Server className="w-4 h-4 text-cyan-400" />
-                    <h2 className="text-xs uppercase tracking-wider font-semibold text-neutral-300">
+                    <Server className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-cyan-400"}`} />
+                    <h2
+                      className={`text-xs uppercase tracking-wider font-semibold ${
+                        isLight ? "text-slate-800" : "text-neutral-300"
+                      }`}
+                    >
                       Target Repository Instrumentation
                     </h2>
                   </div>
-                  <span className="text-[11px] text-neutral-500 font-mono">v2.4 Deception Engine</span>
+                  <span
+                    className={`text-[11px] font-mono ${
+                      isLight ? "text-slate-500" : "text-neutral-500"
+                    }`}
+                  >
+                    v2.4 Deception Engine
+                  </span>
                 </div>
-                <p className="text-xs text-neutral-400 leading-relaxed">
+                <p
+                  className={`text-xs leading-relaxed ${
+                    isLight ? "text-slate-600" : "text-neutral-400"
+                  }`}
+                >
                   Provide the target codebase path to synthesize adaptive honeytokens, database triggers, and canary endpoints.
                 </p>
 
@@ -1035,12 +1376,20 @@ export default function SpectreSyncDashboard() {
                     value={targetPath}
                     onChange={(e) => setTargetPath(e.target.value)}
                     placeholder="/absolute/path/to/target/repository"
-                    className="flex-1 bg-neutral-950/80 border border-white/8 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 rounded-xl px-4 py-2.5 text-xs font-mono text-neutral-200 placeholder:text-neutral-600 transition-all outline-none"
+                    className={`flex-1 rounded-xl px-4 py-2.5 text-xs font-mono transition-all outline-none border ${
+                      isLight
+                        ? "bg-slate-50 border-slate-300 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 text-slate-900 placeholder:text-slate-400"
+                        : "bg-neutral-950/80 border-white/8 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 text-neutral-200 placeholder:text-neutral-600"
+                    }`}
                   />
                   <button
                     onClick={handleDeploy}
                     disabled={isDeploying}
-                    className="bg-linear-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-50 text-neutral-950 font-semibold px-5 py-2.5 rounded-xl text-xs transition-all duration-200 shadow-lg shadow-cyan-500/20 active:scale-[0.98] whitespace-nowrap cursor-pointer flex items-center justify-center gap-2"
+                    className={`font-semibold px-5 py-2.5 rounded-xl text-xs transition-all duration-200 shadow-lg active:scale-[0.98] whitespace-nowrap cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 ${
+                      isLight
+                        ? "bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/25"
+                        : "bg-linear-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-neutral-950 shadow-cyan-500/20"
+                    }`}
                   >
                     {isDeploying ? (
                       <>
@@ -1058,58 +1407,104 @@ export default function SpectreSyncDashboard() {
               </div>
 
               {/* Quick Metrics Bento Card */}
-              <div className="backdrop-blur-xl bg-neutral-900/40 border border-white/8 rounded-2xl p-6 shadow-xl shadow-black/20 flex flex-col justify-between">
+              <div
+                className={`backdrop-blur-xl border rounded-2xl p-6 shadow-xl flex flex-col justify-between transition-all duration-200 ${
+                  isLight
+                    ? "bg-white/85 border-slate-200/90 shadow-slate-200/50"
+                    : "bg-neutral-900/40 border-white/8 shadow-black/20"
+                }`}
+              >
                 <div>
                   <div className="flex items-center gap-2">
-                    <Radio className="w-4 h-4 text-cyan-400" />
-                    <h2 className="text-xs uppercase tracking-wider font-semibold text-neutral-300">
+                    <Radio className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-cyan-400"}`} />
+                    <h2
+                      className={`text-xs uppercase tracking-wider font-semibold ${
+                        isLight ? "text-slate-800" : "text-neutral-300"
+                      }`}
+                    >
                       Deception Status
                     </h2>
                   </div>
                   <div className="mt-4 space-y-3">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-neutral-400">Armed Traps</span>
-                      <span className="font-mono text-white font-medium">{decoys.length}</span>
+                      <span className={isLight ? "text-slate-500" : "text-neutral-400"}>Armed Traps</span>
+                      <span className={`font-mono font-medium ${isLight ? "text-slate-900" : "text-white"}`}>
+                        {decoys.length}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-neutral-400">Canary Health</span>
-                      <span className="font-mono text-emerald-400 font-medium">100% Operational</span>
+                      <span className={isLight ? "text-slate-500" : "text-neutral-400"}>Canary Health</span>
+                      <span className="font-mono text-emerald-600 dark:text-emerald-400 font-medium">100% Operational</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-neutral-400">Defense Mode</span>
-                      <span className={`font-mono font-medium ${sentinelMode === "autonomous" ? "text-cyan-400" : "text-amber-300"}`}>
+                      <span className={isLight ? "text-slate-500" : "text-neutral-400"}>Defense Mode</span>
+                      <span
+                        className={`font-mono font-medium ${
+                          sentinelMode === "autonomous"
+                            ? isLight
+                              ? "text-amber-700"
+                              : "text-cyan-400"
+                            : isLight
+                            ? "text-amber-800"
+                            : "text-amber-300"
+                        }`}
+                      >
                         {sentinelMode === "autonomous" ? "Autonomous Sentinel" : "Supervised (Human Gate)"}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-white/4 flex items-center justify-between text-[11px] text-neutral-500">
+                <div
+                  className={`pt-4 border-t flex items-center justify-between text-[11px] ${
+                    isLight ? "border-slate-200 text-slate-500" : "border-white/4 text-neutral-500"
+                  }`}
+                >
                   <span>Engine: SQLite WAL</span>
-                  <span className="text-neutral-400">Port 5000</span>
+                  <span className={isLight ? "text-slate-600 font-mono" : "text-neutral-400 font-mono"}>
+                    Port 5000
+                  </span>
                 </div>
               </div>
             </div>
 
             {/* Supervised Mode Pending Approval Banner */}
             {pendingApproval && (
-              <div className="backdrop-blur-xl bg-amber-950/40 border border-amber-500/30 rounded-2xl p-5 shadow-2xl shadow-amber-950/20 space-y-3 animate-in fade-in slide-in-from-top-2">
+              <div
+                className={`backdrop-blur-xl border rounded-2xl p-5 shadow-2xl space-y-3 animate-in fade-in slide-in-from-top-2 ${
+                  isLight
+                    ? "bg-amber-50 border-amber-300 shadow-amber-900/10 text-slate-800"
+                    : "bg-amber-950/40 border-amber-500/30 shadow-amber-950/20 text-neutral-200"
+                }`}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <ShieldAlert className="w-5 h-5 text-amber-400" />
+                    <ShieldAlert className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                     <div>
-                      <h4 className="text-xs font-semibold text-white uppercase tracking-wider">
+                      <h4
+                        className={`text-xs font-semibold uppercase tracking-wider ${
+                          isLight ? "text-slate-900" : "text-white"
+                        }`}
+                      >
                         Supervised Action Required · Sentinel Trap Synthesis Proposal
                       </h4>
-                      <p className="text-xs text-neutral-300 mt-0.5">
-                        The AI Sentinel drafted a deception matrix for <span className="font-mono text-amber-300">{pendingApproval.targetPath}</span>. Confirm deployment to arm the network.
+                      <p className={`text-xs mt-0.5 ${isLight ? "text-slate-600" : "text-neutral-300"}`}>
+                        The AI Sentinel drafted a deception matrix for{" "}
+                        <span className="font-mono font-semibold text-amber-700 dark:text-amber-300">
+                          {pendingApproval.targetPath}
+                        </span>
+                        . Confirm deployment to arm the network.
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={handleRejectDeployment}
-                      className="px-3.5 py-1.5 rounded-xl text-xs font-medium bg-neutral-900/80 hover:bg-neutral-800 text-neutral-400 hover:text-white border border-white/10 transition-all cursor-pointer"
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                        isLight
+                          ? "bg-white hover:bg-slate-100 text-slate-600 border-slate-300"
+                          : "bg-neutral-900/80 hover:bg-neutral-800 text-neutral-400 hover:text-white border-white/10"
+                      }`}
                     >
                       Reject
                     </button>
@@ -1126,50 +1521,109 @@ export default function SpectreSyncDashboard() {
             )}
 
             {/* AI Security Agent Reasoning Panel ("Autonomous Defense Sentinel") */}
-            <div className="backdrop-blur-xl bg-neutral-900/40 border border-white/8 rounded-2xl p-6 shadow-xl shadow-black/20 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/6 pb-3">
+            <div
+              className={`backdrop-blur-xl border rounded-2xl p-6 shadow-xl space-y-4 transition-all duration-200 ${
+                isLight
+                  ? "bg-white/85 border-slate-200/90 shadow-slate-200/50"
+                  : "bg-neutral-900/40 border-white/8 shadow-black/20"
+              }`}
+            >
+              <div
+                className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b pb-3 ${
+                  isLight ? "border-slate-200" : "border-white/6"
+                }`}
+              >
                 <div className="flex items-center gap-2.5">
-                  <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+                  <div
+                    className={`p-1.5 rounded-lg border ${
+                      isLight
+                        ? "bg-amber-500/10 border-amber-500/25 text-amber-700"
+                        : "bg-cyan-500/10 border-cyan-500/20 text-cyan-400"
+                    }`}
+                  >
                     <Bot className="w-4 h-4" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-xs uppercase tracking-wider font-semibold text-neutral-200">
+                      <h3
+                        className={`text-xs uppercase tracking-wider font-semibold ${
+                          isLight ? "text-slate-800" : "text-neutral-200"
+                        }`}
+                      >
                         Autonomous Defense Sentinel · Agent Reasoning Stream
                       </h3>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-mono border ${
+                          isLight
+                            ? "bg-amber-500/10 border-amber-500/25 text-amber-800"
+                            : "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
+                        }`}
+                      >
                         {sentinelStatus}
                       </span>
                     </div>
-                    <p className="text-[11px] text-neutral-400 mt-0.5">
+                    <p
+                      className={`text-[11px] mt-0.5 ${
+                        isLight ? "text-slate-500" : "text-neutral-400"
+                      }`}
+                    >
                       Live internal monologue and adaptive decision-making telemetry
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 text-[11px] text-neutral-400 font-mono">
-                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                <div
+                  className={`flex items-center gap-2 text-[11px] font-mono ${
+                    isLight ? "text-slate-500" : "text-neutral-400"
+                  }`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full animate-pulse ${
+                      isLight ? "bg-amber-600" : "bg-cyan-400"
+                    }`}
+                  />
                   <span>Sentinel Core Online</span>
                 </div>
               </div>
 
               {/* Copilot-style Monologue Stream */}
-              <div className="bg-neutral-950/80 border border-white/6 rounded-xl p-4 max-h-72 overflow-y-auto space-y-3 font-mono text-xs">
+              <div
+                className={`border rounded-xl p-4 max-h-72 overflow-y-auto space-y-3 font-mono text-xs ${
+                  isLight
+                    ? "bg-slate-50 border-slate-200 text-slate-800"
+                    : "bg-neutral-950/80 border-white/6 text-neutral-200"
+                }`}
+              >
                 {agentThoughts.map((entry, idx) => (
-                  <div key={idx} className="space-y-1 pb-2 border-b border-white/4 last:border-b-0 last:pb-0">
+                  <div
+                    key={idx}
+                    className={`space-y-1 pb-2 border-b last:border-b-0 last:pb-0 ${
+                      isLight ? "border-slate-200" : "border-white/4"
+                    }`}
+                  >
                     <div className="flex items-center justify-between text-[10px]">
-                      <span className="text-cyan-400 font-semibold flex items-center gap-1.5">
-                        <Cpu className="w-3 h-3 text-cyan-400" />
+                      <span
+                        className={`font-semibold flex items-center gap-1.5 ${
+                          isLight ? "text-amber-700" : "text-cyan-400"
+                        }`}
+                      >
+                        <Cpu className={`w-3 h-3 ${isLight ? "text-amber-600" : "text-cyan-400"}`} />
                         [{entry.stage}]
                       </span>
-                      <span className="text-neutral-500">{entry.time}</span>
+                      <span className={isLight ? "text-slate-400" : "text-neutral-500"}>{entry.time}</span>
                     </div>
-                    <div className="text-neutral-200 leading-relaxed pl-4 border-l border-cyan-500/30">
+                    <div
+                      className={`leading-relaxed pl-4 border-l ${
+                        isLight
+                          ? "text-slate-700 border-amber-500/40"
+                          : "text-neutral-200 border-cyan-500/30"
+                      }`}
+                    >
                       {entry.thought}
                     </div>
                     {entry.action && (
-                      <div className="text-[11px] text-emerald-400/90 pl-4 font-sans flex items-center gap-1.5">
-                        <span className="text-emerald-500 font-mono font-bold">Action:</span>
+                      <div className="text-[11px] text-emerald-600 dark:text-emerald-400/90 pl-4 font-sans flex items-center gap-1.5">
+                        <span className="text-emerald-700 dark:text-emerald-500 font-mono font-bold">Action:</span>
                         <span>{entry.action}</span>
                       </div>
                     )}
@@ -1179,34 +1633,68 @@ export default function SpectreSyncDashboard() {
             </div>
 
             {/* Agent Execution Telemetry Stream */}
-            <div className="backdrop-blur-xl bg-neutral-900/40 border border-white/8 rounded-2xl p-6 shadow-xl shadow-black/20 space-y-4">
-              <div className="flex items-center justify-between border-b border-white/6 pb-3">
+            <div
+              className={`backdrop-blur-xl border rounded-2xl p-6 shadow-xl space-y-4 transition-all duration-200 ${
+                isLight
+                  ? "bg-white/85 border-slate-200/90 shadow-slate-200/50"
+                  : "bg-neutral-900/40 border-white/8 shadow-black/20"
+              }`}
+            >
+              <div
+                className={`flex items-center justify-between border-b pb-3 ${
+                  isLight ? "border-slate-200" : "border-white/6"
+                }`}
+              >
                 <div className="flex items-center gap-2">
-                  <Terminal className="w-4 h-4 text-cyan-400" />
-                  <h3 className="text-xs uppercase tracking-wider font-semibold text-neutral-300">
+                  <Terminal className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-cyan-400"}`} />
+                  <h3
+                    className={`text-xs uppercase tracking-wider font-semibold ${
+                      isLight ? "text-slate-800" : "text-neutral-300"
+                    }`}
+                  >
                     Agent Execution Telemetry
                   </h3>
                 </div>
-                <span className="text-[11px] font-mono text-neutral-500">{logs.length} events logged</span>
+                <span
+                  className={`text-[11px] font-mono ${
+                    isLight ? "text-slate-500" : "text-neutral-500"
+                  }`}
+                >
+                  {logs.length} events logged
+                </span>
               </div>
 
-              <div className="bg-neutral-950/80 border border-white/6 rounded-xl p-4 h-60 overflow-y-auto space-y-2 font-mono text-xs">
+              <div
+                className={`border rounded-xl p-4 h-60 overflow-y-auto space-y-2 font-mono text-xs ${
+                  isLight
+                    ? "bg-slate-50 border-slate-200 text-slate-800"
+                    : "bg-neutral-950/80 border-white/6 text-neutral-200"
+                }`}
+              >
                 {logs.length === 0 ? (
-                  <div className="text-neutral-600 text-xs italic">
+                  <div className={`text-xs italic ${isLight ? "text-slate-400" : "text-neutral-600"}`}>
                     Ready for deployment. Enter repository path above to initialize telemetry stream.
                   </div>
                 ) : (
                   logs.map((log, index) => (
                     <div key={index} className="flex items-start gap-3">
-                      <span className="text-neutral-600 shrink-0 text-[11px]">[{log.time}]</span>
+                      <span className={`shrink-0 text-[11px] ${isLight ? "text-slate-400" : "text-neutral-600"}`}>
+                        [{log.time}]
+                      </span>
                       <span
                         className={
                           log.level === "error"
-                            ? "text-rose-400"
+                            ? "text-rose-500"
                             : log.level === "success"
-                            ? "text-emerald-400"
+                            ? isLight
+                              ? "text-emerald-700"
+                              : "text-emerald-400"
                             : log.level === "warn"
-                            ? "text-amber-300"
+                            ? isLight
+                              ? "text-amber-700"
+                              : "text-amber-300"
+                            : isLight
+                            ? "text-amber-800"
                             : "text-cyan-400"
                         }
                       >
@@ -1220,21 +1708,43 @@ export default function SpectreSyncDashboard() {
 
             {/* Synthesized Decoys Bento Card */}
             {decoys.length > 0 && (
-              <div className="backdrop-blur-xl bg-neutral-900/40 border border-white/8 rounded-2xl p-6 shadow-xl shadow-black/20 space-y-4">
+              <div
+                className={`backdrop-blur-xl border rounded-2xl p-6 shadow-xl space-y-4 transition-all duration-200 ${
+                  isLight
+                    ? "bg-white/85 border-slate-200/90 shadow-slate-200/50"
+                    : "bg-neutral-900/40 border-white/8 shadow-black/20"
+                }`}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Key className="w-4 h-4 text-cyan-400" />
-                    <h3 className="text-xs uppercase tracking-wider font-semibold text-neutral-300">
+                    <Key className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-cyan-400"}`} />
+                    <h3
+                      className={`text-xs uppercase tracking-wider font-semibold ${
+                        isLight ? "text-slate-800" : "text-neutral-300"
+                      }`}
+                    >
                       Synthesized Context-Aware Decoys ({decoys.length})
                     </h3>
                   </div>
-                  <span className="text-[11px] text-neutral-500">Live Canary Endpoints</span>
+                  <span className={`text-[11px] ${isLight ? "text-slate-500" : "text-neutral-500"}`}>
+                    Live Canary Endpoints
+                  </span>
                 </div>
 
-                <div className="overflow-x-auto rounded-xl border border-white/6">
+                <div
+                  className={`overflow-x-auto rounded-xl border ${
+                    isLight ? "border-slate-200" : "border-white/6"
+                  }`}
+                >
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-white/2 border-b border-white/6 text-neutral-400 font-medium">
+                      <tr
+                        className={`border-b font-medium ${
+                          isLight
+                            ? "bg-slate-100/70 border-slate-200 text-slate-600"
+                            : "bg-white/2 border-white/6 text-neutral-400"
+                        }`}
+                      >
                         <th className="py-3 px-4">Trap ID</th>
                         <th className="py-3 px-4">Variable Name</th>
                         <th className="py-3 px-4">Decoy Value</th>
@@ -1243,35 +1753,68 @@ export default function SpectreSyncDashboard() {
                         <th className="py-3 px-4 text-right">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/4">
+                    <tbody
+                      className={`divide-y ${
+                        isLight ? "divide-slate-200" : "divide-white/4"
+                      }`}
+                    >
                       {decoys.map((decoy, idx) => {
                         const trapId = decoy.trap_id || decoy.id || `trap_${idx + 1}`;
                         const isTesting = testingTrapId === trapId;
 
                         return (
-                          <tr key={trapId} className="hover:bg-white/2 transition-colors">
-                            <td className="py-3 px-4 font-mono font-semibold text-cyan-400">
+                          <tr
+                            key={trapId}
+                            className={`transition-colors ${
+                              isLight ? "hover:bg-slate-50" : "hover:bg-white/2"
+                            }`}
+                          >
+                            <td
+                              className={`py-3 px-4 font-mono font-semibold ${
+                                isLight ? "text-amber-700" : "text-cyan-400"
+                              }`}
+                            >
                               {trapId}
                             </td>
-                            <td className="py-3 px-4 font-mono text-white">
+                            <td
+                              className={`py-3 px-4 font-mono ${
+                                isLight ? "text-slate-900" : "text-white"
+                              }`}
+                            >
                               {decoy.variable_name || decoy.trap_name || decoy.name}
                             </td>
-                            <td className="py-3 px-4 font-mono text-neutral-400 truncate max-w-xs">
+                            <td
+                              className={`py-3 px-4 font-mono truncate max-w-xs ${
+                                isLight ? "text-slate-500" : "text-neutral-400"
+                              }`}
+                            >
                               {decoy.decoy_value || decoy.value || "••••••••"}
                             </td>
                             <td className="py-3 px-4">
-                              <span className="px-2 py-0.5 rounded-full bg-white/4 border border-white/8 text-neutral-300 text-[10px] font-medium uppercase">
+                              <span
+                                className={`px-2 py-0.5 rounded-full border text-[10px] font-medium uppercase ${
+                                  isLight
+                                    ? "bg-slate-100 border-slate-200 text-slate-700"
+                                    : "bg-white/4 border-white/8 text-neutral-300"
+                                }`}
+                              >
                                 {decoy.category || decoy.trap_type || "secret"}
                               </span>
                             </td>
-                            <td className="py-3 px-4 font-mono text-neutral-400 hover:text-cyan-300 transition-colors">
+                            <td
+                              className={`py-3 px-4 font-mono transition-colors ${
+                                isLight
+                                  ? "text-slate-600 hover:text-amber-700"
+                                  : "text-neutral-400 hover:text-cyan-300"
+                              }`}
+                            >
                               {decoy.endpoint || decoy.endpoint_url}
                             </td>
                             <td className="py-3 px-4 text-right">
                               <button
                                 onClick={() => handleTriggerCanary(trapId)}
                                 disabled={isTesting || Boolean(testingTrapId)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-medium bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-all duration-200 disabled:opacity-40 cursor-pointer shadow-sm active:scale-[0.98]"
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-medium bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-300 border border-rose-500/30 transition-all duration-200 disabled:opacity-40 cursor-pointer shadow-xs active:scale-[0.98]"
                                 title="Simulate canary trigger and test tarpit response"
                               >
                                 {isTesting ? (
@@ -1281,7 +1824,7 @@ export default function SpectreSyncDashboard() {
                                   </>
                                 ) : (
                                   <>
-                                    <Play className="w-3 h-3 text-rose-400" />
+                                    <Play className="w-3 h-3 text-rose-500" />
                                     <span>Trigger Trap</span>
                                   </>
                                 )}
@@ -1310,70 +1853,160 @@ export default function SpectreSyncDashboard() {
             dwellMultiplier={dwellMultiplier}
             onRefresh={handleManualRefresh}
             isRefreshing={isRefreshing}
+            theme={theme}
           />
         )}
 
         {/* TAB 3: SOC Threat Feed */}
         {activeTab === "soc" && (
           <div className="space-y-6">
-            <div className="backdrop-blur-xl bg-neutral-900/40 border border-white/8 rounded-2xl p-5 shadow-xl shadow-black/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div
+              className={`backdrop-blur-xl border rounded-2xl p-5 shadow-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-all duration-200 ${
+                isLight
+                  ? "bg-white/85 border-slate-200/90 shadow-slate-200/40 text-slate-900"
+                  : "bg-neutral-900/40 border-white/8 shadow-black/20 text-neutral-200"
+              }`}
+            >
               <div>
                 <div className="flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-cyan-400" />
-                  <h2 className="text-xs uppercase tracking-wider font-semibold text-neutral-300">
+                  <Activity className="w-4 h-4 text-rose-500" />
+                  <h2
+                    className={`text-xs uppercase tracking-wider font-semibold ${
+                      isLight ? "text-slate-800" : "text-neutral-300"
+                    }`}
+                  >
                     Live Security Threat Stream
                   </h2>
                 </div>
-                <p className="text-xs text-neutral-400 mt-1">
+                <p
+                  className={`text-xs mt-1 ${
+                    isLight ? "text-slate-500" : "text-neutral-400"
+                  }`}
+                >
                   Real-time telemetry and attacker entrapment logs from active canary endpoints
                 </p>
               </div>
               <button
                 onClick={handleManualRefresh}
                 disabled={isRefreshing}
-                className="bg-neutral-950/80 hover:bg-white/4 text-cyan-400 border border-cyan-500/30 px-4 py-2 rounded-xl text-xs font-medium transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.98]"
+                className={`px-4 py-2 rounded-xl text-xs font-medium transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.98] ${
+                  isLight
+                    ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 border border-amber-500/30"
+                    : "bg-neutral-950/80 hover:bg-white/4 text-cyan-400 border border-cyan-500/30"
+                }`}
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
                 Refresh Feed
               </button>
             </div>
 
-            <div className="backdrop-blur-xl bg-neutral-900/40 border border-white/8 rounded-2xl overflow-hidden shadow-xl shadow-black/20">
+            <div
+              className={`backdrop-blur-xl border rounded-2xl overflow-hidden shadow-xl transition-all duration-200 ${
+                isLight
+                  ? "bg-white/90 border-slate-200/90 shadow-slate-200/40"
+                  : "bg-neutral-900/40 border-white/8 shadow-black/20"
+              }`}
+            >
               {alerts.length === 0 ? (
-                <div className="text-center py-16 text-neutral-500 text-xs">
-                  <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-neutral-600" />
+                <div
+                  className={`text-center py-16 text-xs ${
+                    isLight ? "text-slate-500" : "text-neutral-500"
+                  }`}
+                >
+                  <CheckCircle2
+                    className={`w-8 h-8 mx-auto mb-2 ${
+                      isLight ? "text-slate-400" : "text-neutral-600"
+                    }`}
+                  />
                   No security alerts recorded. All canary traps are silent and armed.
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
+                  <table className="w-full text-left text-xs border-collapse table-fixed">
                     <thead>
-                      <tr className="bg-white/2 border-b border-white/6 text-neutral-400 font-medium">
-                        <th className="py-3 px-4">ID</th>
-                        <th className="py-3 px-4">Timestamp</th>
-                        <th className="py-3 px-4">Source IP</th>
-                        <th className="py-3 px-4">Trap Target</th>
-                        <th className="py-3 px-4">Status</th>
+                      <tr
+                        className={`border-b font-medium ${
+                          isLight
+                            ? "bg-slate-100/70 border-slate-200 text-slate-600"
+                            : "bg-white/2 border-white/6 text-neutral-400"
+                        }`}
+                      >
+                        <th className="py-3 px-4 w-28">Alert ID</th>
+                        <th className="py-3 px-4 w-56">Timestamp (IST)</th>
+                        <th className="py-3 px-4 w-44">Source IP</th>
+                        <th className="py-3 px-4">Trap Target & Fingerprint</th>
+                        <th className="py-3 px-4 w-52 text-right">Containment Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/4">
-                      {alerts.map((alert, idx) => (
-                        <tr key={alert.id || idx} className="hover:bg-white/2 transition-colors">
-                          <td className="py-3 px-4 font-mono font-medium text-cyan-400">#{alert.id}</td>
-                          <td className="py-3 px-4 font-mono text-neutral-400">{alert.timestamp}</td>
-                          <td className="py-3 px-4 font-mono text-white font-medium">
-                            {alert.source_ip || alert.ip}
-                          </td>
-                          <td className="py-3 px-4 font-mono text-neutral-300">
-                            {alert.trap_name || alert.type || "Canary Hit"}
-                          </td>
-                          <td className="py-3 px-4">
-                            <span className="px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-medium">
-                              {alert.status || "Triggered"}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                    <tbody
+                      className={`divide-y ${
+                        isLight ? "divide-slate-200/80" : "divide-white/4"
+                      }`}
+                    >
+                      {alerts.map((alert, idx) => {
+                        const targetAsset = getTrapTargetAsset(alert, decoys);
+                        const fingerprint = formatClientFingerprint(alert.user_agent || alert.type);
+                        const istTimestamp = formatIST(alert.timestamp);
+
+                        return (
+                          <tr
+                            key={alert.id || idx}
+                            className={`transition-colors ${
+                              isLight ? "hover:bg-slate-50" : "hover:bg-white/2"
+                            }`}
+                          >
+                            <td
+                              className={`py-3 px-4 font-mono font-semibold truncate ${
+                                isLight ? "text-amber-700" : "text-cyan-400"
+                              }`}
+                            >
+                              #{String(alert.id || idx + 1).slice(0, 8)}
+                            </td>
+                            <td
+                              className={`py-3 px-4 font-mono whitespace-nowrap ${
+                                isLight ? "text-slate-600" : "text-neutral-400"
+                              }`}
+                            >
+                              {istTimestamp}
+                            </td>
+                            <td
+                              className={`py-3 px-4 font-mono font-medium truncate ${
+                                isLight ? "text-slate-900" : "text-white"
+                              }`}
+                            >
+                              {alert.source_ip || alert.ip || "127.0.0.1"}
+                            </td>
+                            <td className="py-3 px-4 max-w-sm">
+                              <div className="flex flex-col gap-0.5 min-w-0">
+                                {/* Primary Line (Target Canary Asset in bold) */}
+                                <span
+                                  className={`font-mono font-bold text-xs truncate ${
+                                    isLight ? "text-slate-900" : "text-white"
+                                  }`}
+                                  title={targetAsset}
+                                >
+                                  {targetAsset}
+                                </span>
+                                {/* Secondary Line (Client Fingerprint) */}
+                                <span
+                                  className={`font-mono text-[11px] truncate ${
+                                    isLight ? "text-slate-500" : "text-neutral-400"
+                                  }`}
+                                  title={alert.user_agent || fingerprint}
+                                >
+                                  {fingerprint}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-right whitespace-nowrap">
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-mono font-medium whitespace-nowrap bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/25">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5 shrink-0 animate-pulse" />
+                                {alert.status || "Suspended (3.5s Tarpit)"}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1383,25 +2016,80 @@ export default function SpectreSyncDashboard() {
         )}
       </main>
 
-      {/* Minimalist Bottom Control Dock */}
-      <footer className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40">
-        <div className="backdrop-blur-xl bg-neutral-900/80 border border-white/8 shadow-2xl shadow-black/50 rounded-full px-5 py-2 flex items-center gap-6 text-[11px] text-neutral-400">
-          <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-            <span className="text-neutral-300">Mesh Core: Active</span>
-          </div>
-          <span className="text-white/10">|</span>
-          <div className="flex items-center gap-1.5">
-            <span className="font-mono text-neutral-300">{alerts.length}</span>
-            <span>Entanglements</span>
-          </div>
-          <span className="text-white/10">|</span>
-          <div className="flex items-center gap-1.5">
-            <span className="font-mono text-neutral-300">{totalDecoysCount}</span>
-            <span>Decoys Armed</span>
-          </div>
-        </div>
-      </footer>
+      {/* Dynamic Translucent Bottom Dockbar */}
+      <nav
+        aria-label="Main Navigation Dock"
+        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 backdrop-blur-md rounded-full border shadow-2xl px-4 py-2 flex items-center gap-1.5 sm:gap-2 transition-all duration-300 ${
+          isLight
+            ? "bg-white/85 border-slate-300/80 shadow-slate-300/60"
+            : "bg-slate-900/70 border-slate-700/50 shadow-black/80"
+        }`}
+      >
+        <button
+          onClick={() => setActiveTab("deploy")}
+          className={`px-3.5 sm:px-4 py-2 text-xs font-medium rounded-full transition-all duration-200 flex items-center gap-2 cursor-pointer ${
+            activeTab === "deploy"
+              ? isLight
+                ? "bg-amber-500/15 text-amber-800 border border-amber-500/35 font-semibold shadow-xs"
+                : "bg-slate-800/90 text-white shadow-md border border-white/15"
+              : isLight
+              ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
+              : "text-neutral-400 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <Zap className={`w-3.5 h-3.5 ${isLight ? "text-amber-600" : "text-cyan-400"}`} />
+          <span>Mesh Deployment</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("topology")}
+          className={`px-3.5 sm:px-4 py-2 text-xs font-medium rounded-full transition-all duration-200 flex items-center gap-2 cursor-pointer ${
+            activeTab === "topology"
+              ? isLight
+                ? "bg-amber-500/15 text-amber-800 border border-amber-500/35 font-semibold shadow-xs"
+                : "bg-slate-800/90 text-white shadow-md border border-white/15"
+              : isLight
+              ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
+              : "text-neutral-400 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <Radar className={`w-3.5 h-3.5 ${isLight ? "text-amber-600" : "text-cyan-400"}`} />
+          <span>Ghost Topology</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("soc")}
+          className={`px-3.5 sm:px-4 py-2 text-xs font-medium rounded-full transition-all duration-200 flex items-center gap-2 cursor-pointer ${
+            activeTab === "soc"
+              ? isLight
+                ? "bg-amber-500/15 text-amber-800 border border-amber-500/35 font-semibold shadow-xs"
+                : "bg-slate-800/90 text-white shadow-md border border-white/15"
+              : isLight
+              ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
+              : "text-neutral-400 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <Activity className="w-3.5 h-3.5 text-rose-500" />
+          <span>Threat Feed</span>
+          {alerts.length > 0 && (
+            <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-rose-500/20 text-rose-600 dark:text-rose-300 border border-rose-500/30">
+              {alerts.length}
+            </span>
+          )}
+        </button>
+      </nav>
+
+      {/* Sleek Minimalist Bottom-Right Status Floater */}
+      <div
+        className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-3.5 py-2 rounded-full backdrop-blur-md border shadow-2xl transition-all duration-200 text-xs font-mono select-none ${
+          isLight
+            ? "bg-white/85 border-slate-300/80 text-slate-800 shadow-slate-300/60"
+            : "bg-slate-900/80 border-slate-700/60 text-slate-200 shadow-black/70"
+        }`}
+      >
+        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+        <span className="font-semibold tracking-tight font-sans">Mesh Active</span>
+      </div>
     </div>
   );
 }
