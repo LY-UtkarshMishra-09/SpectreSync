@@ -231,7 +231,7 @@ Contributions from the team are encouraged.
 
 ## License
 
-No license has been specified here. Add a `LICENSE` file and update this section once the team has selected an appropriate license.
+This project is licensed via MIT License Policies.
 
 ## Author
 
