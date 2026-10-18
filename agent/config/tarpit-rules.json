@@ -1,0 +1,18 @@
+{
+  "192.0.2.77": {
+    "ip": "192.0.2.77",
+    "delayMs": 4500,
+    "addedAt": "2026-10-18T16:09:50.862Z",
+    "lastTriggeredAt": "2026-10-18T16:36:31.782Z",
+    "hitsCount": 2,
+    "status": "ACTIVE"
+  },
+  "203.0.113.99": {
+    "ip": "203.0.113.99",
+    "delayMs": 8500,
+    "addedAt": "2026-10-18T16:09:50.886Z",
+    "lastTriggeredAt": "2026-10-18T16:36:31.796Z",
+    "hitsCount": 2,
+    "status": "ACTIVE"
+  }
+}

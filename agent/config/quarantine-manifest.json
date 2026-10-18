@@ -1,0 +1,9 @@
+{
+  "/api/v1/vault/tokens": {
+    "assetId": "/api/v1/vault/tokens",
+    "quarantinedAt": "2026-10-18T16:36:31.791Z",
+    "reason": "Asset [/api/v1/vault/tokens] tripped. Tagging as quarantined and redirecting probe traffic.",
+    "status": "ISOLATED",
+    "redirectionTarget": "/api/canary?quarantined=true"
+  }
+}

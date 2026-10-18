@@ -1,0 +1,10 @@
+{
+  "/api/v1/vault/tokens": {
+    "route": "/api/v1/vault/tokens",
+    "handlerPath": "pages\\api\\decoy\\api_v1_vault_tokens.js",
+    "category": "canary_replenishment",
+    "createdAt": "2026-10-18T16:36:31.787Z",
+    "lastAccessed": "2026-10-18T16:36:31.787Z",
+    "syntheticPayloadType": "MOCK_CANARY_JWT"
+  }
+}
