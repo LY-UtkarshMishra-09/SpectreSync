@@ -17,6 +17,7 @@ app.get("/", (req, res) => {
   res.send("SpectreSync Backend API is online and listening.");
 });
 
+<<<<<<< HEAD
 // -- Active Defense Agent Module ---------------------------------------------
 let activeDefenseAgent = null;
 try {
@@ -27,6 +28,8 @@ try {
   console.warn("Active Defense Agent module not pre-compiled, fallback initialized:", err.message);
 }
 
+=======
+>>>>>>> b23640bae9ffcd89d594131e21e4a3a9e9d8ab73
 // -- Database initialization --------------------------------------------------
 
 const DB_PATH = path.join(__dirname, "spectresync.db");
@@ -306,6 +309,7 @@ const handleCanaryHit = async (req, res) => {
       delayMs
     );
 
+<<<<<<< HEAD
     // Ingest threat event into Active Defense Agent
     if (activeDefenseAgent) {
       try {
@@ -321,6 +325,8 @@ const handleCanaryHit = async (req, res) => {
       }
     }
 
+=======
+>>>>>>> b23640bae9ffcd89d594131e21e4a3a9e9d8ab73
     // Inject delay to slow down automated crawlers and bots
     await new Promise((resolve) => setTimeout(resolve, delayMs));
 
@@ -336,6 +342,7 @@ const handleCanaryHit = async (req, res) => {
 app.get("/api/canary", handleCanaryHit);
 app.post("/api/canary", handleCanaryHit);
 
+<<<<<<< HEAD
 // -- Active Defense Agent REST Endpoints ---------------------------------------
 
 // POST /api/defense/events -- Ingest structured threat alert telemetry
@@ -428,6 +435,8 @@ app.post("/api/defense/mode", (req, res) => {
   res.json({ status: "ok", mode: activeDefenseAgent.getMode() });
 });
 
+=======
+>>>>>>> b23640bae9ffcd89d594131e21e4a3a9e9d8ab73
 // GET /api/alerts -- return all stored alerts, newest first
 app.get("/api/alerts", (_req, res) => {
   try {
