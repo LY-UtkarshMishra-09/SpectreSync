@@ -322,7 +322,7 @@ To execute an action, try:
     <div
       role="dialog"
       aria-label="Spectre AI"
-      className="fixed inset-y-0 right-0 z-50 w-full sm:w-[480px] lg:w-[520px] shadow-2xl flex flex-col border-l backdrop-blur-2xl transition-all duration-300 animate-in slide-in-from-right duration-300"
+      className="fixed inset-y-0 right-0 z-50 w-full sm:w-120 lg:w-130 shadow-2xl flex flex-col border-l backdrop-blur-2xl transition-all duration-300 animate-in slide-in-from-right"
       style={{
         backgroundColor: isLight ? "rgba(255, 255, 255, 0.96)" : "rgba(9, 13, 22, 0.96)",
         borderColor: isLight ? "rgba(226, 232, 240, 0.9)" : "rgba(30, 41, 59, 0.9)",
