@@ -799,7 +799,7 @@ export default function SpectreSyncDashboard() {
     "SpectreSync SOC initialized. 3 autonomous defense agents actively monitoring telemetry streams. Network posture: OPTIMAL."
   );
 
-  // Keyboard shortcut listener for Ctrl+K or Cmd+K to toggle AI Agent Copilot
+  // Keyboard shortcut listener for Ctrl+K or Cmd+K to toggle Spectre AI
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
@@ -1527,11 +1527,11 @@ export default function SpectreSyncDashboard() {
                   ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 border-amber-500/30"
                   : "bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border-cyan-500/30 hover:border-cyan-500/50"
               }`}
-              title="Toggle Spectre AI Copilot (Ctrl+K)"
-              aria-label="Toggle AI Copilot"
+              title="Toggle Spectre AI (Ctrl+K)"
+              aria-label="Toggle Spectre AI"
             >
               <Bot className="w-3.5 h-3.5 text-cyan-400" />
-              <span>AI Copilot</span>
+              <span>Spectre AI</span>
               <kbd className="hidden md:inline-block px-1.5 py-0.5 text-[9px] font-mono rounded bg-black/30 text-neutral-400 border border-white/10">
                 Ctrl+K
               </kbd>
@@ -2728,10 +2728,10 @@ export default function SpectreSyncDashboard() {
               ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
               : "text-neutral-400 hover:text-white hover:bg-white/5"
           }`}
-          title="Toggle Spectre AI Copilot (Ctrl+K)"
+          title="Toggle Spectre AI (Ctrl+K)"
         >
           <Bot className={`w-3.5 h-3.5 ${isAIAgentOpen ? "text-cyan-400 animate-pulse" : isLight ? "text-amber-600" : "text-cyan-400"}`} />
-          <span>AI Copilot</span>
+          <span>Spectre AI</span>
         </button>
       </nav>
 
@@ -2747,7 +2747,7 @@ export default function SpectreSyncDashboard() {
         <span className="font-semibold tracking-tight font-sans">Mesh Active</span>
       </div>
 
-      {/* Autonomous In-Website AI Copilot Drawer */}
+      {/* Autonomous In-Website Spectre AI Drawer */}
       <SpectreAIAgent
         isOpen={isAIAgentOpen}
         onClose={() => setIsAIAgentOpen(false)}

@@ -43,7 +43,7 @@ export default function SpectreAIAgent({
         "Autonomous Agent core initialized. Telemetry channels mapped to SQLite WAL engine. Ready to receive operator directives.",
       toolCall: null,
       content:
-        "SpectreSync Autonomous Agent online. I can execute mesh deployments, simulate adversarial vectors, adjust tarpit throttling, isolate suspicious IPs, or switch dashboard perspectives. Type a command or ask a question.",
+        "Spectre AI online. I can execute mesh deployments, simulate adversarial vectors, adjust tarpit throttling, isolate suspicious IPs, or switch dashboard perspectives. Type a command or ask a question.",
     },
   ]);
   const [inputVal, setInputVal] = useState("");
@@ -85,7 +85,7 @@ export default function SpectreAIAgent({
     setIsProcessing(true);
 
     if (appendLog) {
-      appendLog(`AI Copilot command dispatched from [${String(activeTab).toUpperCase()}]: "${text}"`, "info");
+      appendLog(`Spectre AI command dispatched from [${String(activeTab).toUpperCase()}]: "${text}"`, "info");
     }
 
     const lower = text.toLowerCase();
@@ -113,7 +113,7 @@ export default function SpectreAIAgent({
 
       appendAgentThought(
         "AGENT_EXECUTE",
-        `Autonomous agent dispatched deployment command for [${chosenPath}].`,
+        `Spectre AI dispatched deployment command for [${chosenPath}].`,
         "Executing synthetic trap bindings."
       );
 
@@ -132,7 +132,7 @@ export default function SpectreAIAgent({
 
       appendAgentThought(
         "AGENT_EXECUTE",
-        "Autonomous agent triggered synthetic attack vector. Testing multi-agent response.",
+        "Spectre AI triggered synthetic attack vector. Testing multi-agent response.",
         "Simulating probe."
       );
 
@@ -248,9 +248,9 @@ export default function SpectreAIAgent({
           id: `init-${Date.now()}`,
           sender: "agent",
           timestamp: new Date().toLocaleTimeString(),
-          thought: "Session memory cleared on operator request.",
+          thought: "Spectre AI session memory cleared on operator request.",
           toolCall: null,
-          content: "Session history cleared. Autonomous Agent ready for new directives.",
+          content: "Spectre AI session history cleared. Ready for new directives.",
         },
       ]);
       setIsProcessing(false);
@@ -272,7 +272,7 @@ export default function SpectreAIAgent({
 - /isolate [ip] : Quarantine and sever routes for an adversarial IP
 - /tarpit [ip] : Inject exponential response delay into attacker socket
 - /status : Display full security telemetry and deception ratio briefing
-- /clear : Reset copilot session history
+- /clear : Reset Spectre AI session history
 
 You can also speak naturally (e.g., "scan my backend", "switch to topology", "isolate the threat").`;
     }
@@ -280,7 +280,7 @@ You can also speak naturally (e.g., "scan my backend", "switch to topology", "is
     else {
       thoughtText = `Analyzing natural language inquiry: "${text}". Synthesizing response grounded in active defense architecture.`;
 
-      replyText = `Acknowledged directive. As the SpectreSync Autonomous Agent, I continuously monitor telemetry, generate high-fidelity decoys, and trap malicious scanners. 
+      replyText = `Acknowledged directive. As Spectre AI, I continuously monitor telemetry, generate high-fidelity decoys, and trap malicious scanners. 
 
 To execute an action, try:
 - "Deploy mesh for ./src"
@@ -321,14 +321,14 @@ To execute an action, try:
   return (
     <div
       role="dialog"
-      aria-label="SpectreSync AI Copilot"
+      aria-label="Spectre AI"
       className="fixed inset-y-0 right-0 z-50 w-full sm:w-[480px] lg:w-[520px] shadow-2xl flex flex-col border-l backdrop-blur-2xl transition-all duration-300 animate-in slide-in-from-right duration-300"
       style={{
         backgroundColor: isLight ? "rgba(255, 255, 255, 0.96)" : "rgba(9, 13, 22, 0.96)",
         borderColor: isLight ? "rgba(226, 232, 240, 0.9)" : "rgba(30, 41, 59, 0.9)",
       }}
     >
-      {/* Copilot Header */}
+      {/* Spectre AI Header */}
       <div
         className={`px-5 py-4 border-b flex items-center justify-between ${
           isLight ? "border-slate-200 bg-slate-50/80" : "border-slate-800/80 bg-black/40"
@@ -345,7 +345,7 @@ To execute an action, try:
                   isLight ? "text-slate-900" : "text-white"
                 }`}
               >
-                Spectre AI Copilot
+                Spectre AI
               </h2>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-500/10 text-cyan-400 border border-cyan-500/25">
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
@@ -353,7 +353,7 @@ To execute an action, try:
               </span>
             </div>
             <p className="text-[11px] font-mono text-neutral-400">
-              Autonomous Codebase & Defense Sentinel
+              Autonomous Codebase & Defense Agent
             </p>
           </div>
         </div>
@@ -383,7 +383,7 @@ To execute an action, try:
                   timestamp: new Date().toLocaleTimeString(),
                   thought: "Session memory reset.",
                   toolCall: null,
-                  content: "Copilot session reset. Ready for directives.",
+                  content: "Spectre AI session reset. Ready for directives.",
                 },
               ])
             }
@@ -403,8 +403,8 @@ To execute an action, try:
                 ? "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
                 : "text-neutral-400 hover:text-white hover:bg-white/5"
             }`}
-            title="Close Copilot Panel"
-            aria-label="Close Copilot"
+            title="Close Spectre AI"
+            aria-label="Close Spectre AI"
           >
             <Minimize2 className="w-3.5 h-3.5" />
           </button>
@@ -497,7 +497,7 @@ To execute an action, try:
                     <Bot className="w-3 h-3" />
                   </div>
                   <span className="text-[11px] font-bold text-cyan-400">
-                    SPECTRESYNC SENTINEL
+                    SPECTRE AI
                   </span>
                   <span className="text-[10px] text-neutral-500">{msg.timestamp}</span>
                 </div>
