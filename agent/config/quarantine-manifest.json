@@ -5,5 +5,12 @@
     "reason": "Asset [/api/v1/vault/tokens] tripped. Tagging as quarantined and redirecting probe traffic.",
     "status": "ISOLATED",
     "redirectionTarget": "/api/canary?quarantined=true"
+  },
+  "trap_09": {
+    "assetId": "trap_09",
+    "quarantinedAt": "2026-10-19T07:53:10.431Z",
+    "reason": "Asset [trap_09] tripped. Tagging as quarantined and redirecting probe traffic.",
+    "status": "ISOLATED",
+    "redirectionTarget": "/api/canary?quarantined=true"
   }
 }
