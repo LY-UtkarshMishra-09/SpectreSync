@@ -1,10 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo, useSyncExternalStore } from "react";
-<<<<<<< HEAD
 import SpectreAIAgent from "./SpectreAIAgent";
-=======
->>>>>>> b23640bae9ffcd89d594131e21e4a3a9e9d8ab73
 import {
   RefreshCw,
   Shield,
@@ -29,13 +26,10 @@ import {
   ChevronRight,
   Sun,
   Moon,
-<<<<<<< HEAD
   Eye,
   Hourglass,
   Check,
   ShieldCheck,
-=======
->>>>>>> b23640bae9ffcd89d594131e21e4a3a9e9d8ab73
 } from "lucide-react";
 
 // Known decoy path and asset mappings for realistic enterprise honeytokens
@@ -133,7 +127,6 @@ function formatIST(isoDateString) {
   }
 }
 
-<<<<<<< HEAD
 // Indian Standard Time (IST, UTC+5:30) Formatter: "HH:mm:ss IST"
 function formatISTTime(isoDateString) {
   if (!isoDateString) return "N/A";
@@ -185,8 +178,6 @@ function getThreatScore(alert) {
   return 34;
 }
 
-=======
->>>>>>> b23640bae9ffcd89d594131e21e4a3a9e9d8ab73
 // Core production assets placed evenly around the center of the topology (well spaced to prevent label collisions)
 const CORE_ASSETS = [
   { id: "core-db", label: "PROD-DB-PRIMARY", type: "PostgreSQL Database", relX: 0, relY: -0.19 },
@@ -802,7 +793,6 @@ export default function SpectreSyncDashboard() {
   const [sentinelMode, setSentinelMode] = useState("autonomous"); // "autonomous" | "supervised"
   const [sentinelStatus, setSentinelStatus] = useState("Monitoring Perimeter");
   const [pendingApproval, setPendingApproval] = useState(null);
-<<<<<<< HEAD
   const [isSimulating, setIsSimulating] = useState(false);
   const [isAIAgentOpen, setIsAIAgentOpen] = useState(false);
   const [socGreetingText, setSocGreetingText] = useState(
@@ -820,8 +810,6 @@ export default function SpectreSyncDashboard() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
-=======
->>>>>>> b23640bae9ffcd89d594131e21e4a3a9e9d8ab73
 
   // Synchronize root HTML class when theme changes
   useEffect(() => {
@@ -970,7 +958,6 @@ export default function SpectreSyncDashboard() {
     }
   };
 
-<<<<<<< HEAD
   // Real-time threat vector simulation across multi-agent defense pipeline
   const handleSimulateThreatVector = async () => {
     setIsSimulating(true);
@@ -1182,8 +1169,6 @@ export default function SpectreSyncDashboard() {
     setTimeout(() => setToastNotification(null), 2500);
   };
 
-=======
->>>>>>> b23640bae9ffcd89d594131e21e4a3a9e9d8ab73
   // Periodic and tab-driven alert synchronization
   useEffect(() => {
     if (activeTab !== "soc" && activeTab !== "topology") return;
@@ -1530,7 +1515,6 @@ export default function SpectreSyncDashboard() {
               <span className="hidden sm:inline">Sync Data</span>
             </button>
 
-<<<<<<< HEAD
             {/* AI Agent Copilot Trigger Button */}
             <button
               onClick={() => setIsAIAgentOpen((prev) => !prev)}
@@ -1553,8 +1537,6 @@ export default function SpectreSyncDashboard() {
               </kbd>
             </button>
 
-=======
->>>>>>> b23640bae9ffcd89d594131e21e4a3a9e9d8ab73
             {/* Theme Toggle Button (Sun / Moon) */}
             <button
               onClick={toggleTheme}
@@ -2184,7 +2166,6 @@ export default function SpectreSyncDashboard() {
         {/* TAB 3: SOC Threat Feed */}
         {activeTab === "soc" && (
           <div className="space-y-6">
-<<<<<<< HEAD
             {/* 1. AI SOC Greeter Card & Multi-Agent Defense Controls */}
             <div
               className={`backdrop-blur-xl border rounded-2xl p-5 sm:p-6 shadow-xl transition-all duration-200 ${
@@ -2466,57 +2447,11 @@ export default function SpectreSyncDashboard() {
             </div>
 
             {/* 3. Real-Time SOC Threat Feed Table */}
-=======
-            <div
-              className={`backdrop-blur-xl border rounded-2xl p-5 shadow-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-all duration-200 ${
-                isLight
-                  ? "bg-white/85 border-slate-200/90 shadow-slate-200/40 text-slate-900"
-                  : "bg-neutral-900/40 border-white/8 shadow-black/20 text-neutral-200"
-              }`}
-            >
-              <div>
-                <div className="flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-rose-500" />
-                  <h2
-                    className={`text-xs uppercase tracking-wider font-semibold ${
-                      isLight ? "text-slate-800" : "text-neutral-300"
-                    }`}
-                  >
-                    Live Security Threat Stream
-                  </h2>
-                </div>
-                <p
-                  className={`text-xs mt-1 ${
-                    isLight ? "text-slate-500" : "text-neutral-400"
-                  }`}
-                >
-                  Real-time telemetry and attacker entrapment logs from active canary endpoints
-                </p>
-              </div>
-              <button
-                onClick={handleManualRefresh}
-                disabled={isRefreshing}
-                className={`px-4 py-2 rounded-xl text-xs font-medium transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.98] ${
-                  isLight
-                    ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 border border-amber-500/30"
-                    : "bg-neutral-950/80 hover:bg-white/4 text-cyan-400 border border-cyan-500/30"
-                }`}
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
-                Refresh Feed
-              </button>
-            </div>
-
->>>>>>> b23640bae9ffcd89d594131e21e4a3a9e9d8ab73
             <div
               className={`backdrop-blur-xl border rounded-2xl overflow-hidden shadow-xl transition-all duration-200 ${
                 isLight
                   ? "bg-white/90 border-slate-200/90 shadow-slate-200/40"
-<<<<<<< HEAD
                   : "bg-[#090D16]/90 border-slate-800 shadow-black/20"
-=======
-                  : "bg-neutral-900/40 border-white/8 shadow-black/20"
->>>>>>> b23640bae9ffcd89d594131e21e4a3a9e9d8ab73
               }`}
             >
               {alerts.length === 0 ? (
@@ -2537,7 +2472,6 @@ export default function SpectreSyncDashboard() {
                   <table className="w-full text-left text-xs border-collapse table-fixed">
                     <thead>
                       <tr
-<<<<<<< HEAD
                         className={`border-b font-medium font-mono ${
                           isLight
                             ? "bg-slate-100/70 border-slate-200 text-slate-600"
@@ -2557,43 +2491,20 @@ export default function SpectreSyncDashboard() {
                     <tbody
                       className={`divide-y font-mono ${
                         isLight ? "divide-slate-200/80" : "divide-slate-800/80"
-=======
-                        className={`border-b font-medium ${
-                          isLight
-                            ? "bg-slate-100/70 border-slate-200 text-slate-600"
-                            : "bg-white/2 border-white/6 text-neutral-400"
-                        }`}
-                      >
-                        <th className="py-3 px-4 w-28">Alert ID</th>
-                        <th className="py-3 px-4 w-56">Timestamp (IST)</th>
-                        <th className="py-3 px-4 w-44">Source IP</th>
-                        <th className="py-3 px-4">Trap Target & Fingerprint</th>
-                        <th className="py-3 px-4 w-52 text-right">Containment Status</th>
-                      </tr>
-                    </thead>
-                    <tbody
-                      className={`divide-y ${
-                        isLight ? "divide-slate-200/80" : "divide-white/4"
->>>>>>> b23640bae9ffcd89d594131e21e4a3a9e9d8ab73
                       }`}
                     >
                       {alerts.map((alert, idx) => {
                         const targetAsset = getTrapTargetAsset(alert, decoys);
                         const fingerprint = formatClientFingerprint(alert.user_agent || alert.type);
-<<<<<<< HEAD
                         const istTimestamp = formatISTTime(alert.timestamp);
                         const defenseStatus = getDefenseStatus(alert);
                         const threatScore = getThreatScore(alert);
                         const alertId = alert.id || alert.trap_id || `alert-${idx}`;
-=======
-                        const istTimestamp = formatIST(alert.timestamp);
->>>>>>> b23640bae9ffcd89d594131e21e4a3a9e9d8ab73
 
                         return (
                           <tr
                             key={alert.id || idx}
                             className={`transition-colors ${
-<<<<<<< HEAD
                               isLight ? "hover:bg-slate-50/80" : "hover:bg-white/2"
                             }`}
                           >
@@ -2620,46 +2531,6 @@ export default function SpectreSyncDashboard() {
                                 </span>
                                 <span
                                   className={`text-[11px] truncate ${
-=======
-                              isLight ? "hover:bg-slate-50" : "hover:bg-white/2"
-                            }`}
-                          >
-                            <td
-                              className={`py-3 px-4 font-mono font-semibold truncate ${
-                                isLight ? "text-amber-700" : "text-cyan-400"
-                              }`}
-                            >
-                              #{String(alert.id || idx + 1).slice(0, 8)}
-                            </td>
-                            <td
-                              className={`py-3 px-4 font-mono whitespace-nowrap ${
-                                isLight ? "text-slate-600" : "text-neutral-400"
-                              }`}
-                            >
-                              {istTimestamp}
-                            </td>
-                            <td
-                              className={`py-3 px-4 font-mono font-medium truncate ${
-                                isLight ? "text-slate-900" : "text-white"
-                              }`}
-                            >
-                              {alert.source_ip || alert.ip || "127.0.0.1"}
-                            </td>
-                            <td className="py-3 px-4 max-w-sm">
-                              <div className="flex flex-col gap-0.5 min-w-0">
-                                {/* Primary Line (Target Canary Asset in bold) */}
-                                <span
-                                  className={`font-mono font-bold text-xs truncate ${
-                                    isLight ? "text-slate-900" : "text-white"
-                                  }`}
-                                  title={targetAsset}
-                                >
-                                  {targetAsset}
-                                </span>
-                                {/* Secondary Line (Client Fingerprint) */}
-                                <span
-                                  className={`font-mono text-[11px] truncate ${
->>>>>>> b23640bae9ffcd89d594131e21e4a3a9e9d8ab73
                                     isLight ? "text-slate-500" : "text-neutral-400"
                                   }`}
                                   title={alert.user_agent || fingerprint}
@@ -2668,7 +2539,6 @@ export default function SpectreSyncDashboard() {
                                 </span>
                               </div>
                             </td>
-<<<<<<< HEAD
 
                             {/* Targeted Canary Asset */}
                             <td className="py-3.5 px-4 max-w-sm">
@@ -2770,13 +2640,6 @@ export default function SpectreSyncDashboard() {
                                   </button>
                                 </div>
                               )}
-=======
-                            <td className="py-3 px-4 text-right whitespace-nowrap">
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-mono font-medium whitespace-nowrap bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/25">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5 shrink-0 animate-pulse" />
-                                {alert.status || "Suspended (3.5s Tarpit)"}
-                              </span>
->>>>>>> b23640bae9ffcd89d594131e21e4a3a9e9d8ab73
                             </td>
                           </tr>
                         );
@@ -2851,7 +2714,6 @@ export default function SpectreSyncDashboard() {
             </span>
           )}
         </button>
-<<<<<<< HEAD
 
         <div className={`h-4 w-px mx-0.5 ${isLight ? "bg-slate-300" : "bg-slate-700"}`} />
 
@@ -2871,8 +2733,6 @@ export default function SpectreSyncDashboard() {
           <Bot className={`w-3.5 h-3.5 ${isAIAgentOpen ? "text-cyan-400 animate-pulse" : isLight ? "text-amber-600" : "text-cyan-400"}`} />
           <span>AI Copilot</span>
         </button>
-=======
->>>>>>> b23640bae9ffcd89d594131e21e4a3a9e9d8ab73
       </nav>
 
       {/* Sleek Minimalist Bottom-Right Status Floater */}
@@ -2886,7 +2746,6 @@ export default function SpectreSyncDashboard() {
         <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
         <span className="font-semibold tracking-tight font-sans">Mesh Active</span>
       </div>
-<<<<<<< HEAD
 
       {/* Autonomous In-Website AI Copilot Drawer */}
       <SpectreAIAgent
@@ -2912,8 +2771,6 @@ export default function SpectreSyncDashboard() {
         deceptionRatio={deceptionRatio}
         dwellMultiplier={dwellMultiplier}
       />
-=======
->>>>>>> b23640bae9ffcd89d594131e21e4a3a9e9d8ab73
     </div>
   );
 }
