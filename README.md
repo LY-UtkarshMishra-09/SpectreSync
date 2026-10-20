@@ -238,6 +238,9 @@ This project is licensed via MIT License Policies.
 **Utkarsh Mishra**  
 GitHub: [LY-UtkarshMishra-09](https://github.com/LY-UtkarshMishra-09)
 
+## Presentation
+Here is the presentation for the project:
+(./SpectreSync/Spectresync_Presentation/)
 ---
 
 *SpectreSync — Exploring proactive security through deception, monitoring, and threat visibility.*
