@@ -12,5 +12,12 @@
     "reason": "Asset [trap_09] tripped. Tagging as quarantined and redirecting probe traffic.",
     "status": "ISOLATED",
     "redirectionTarget": "/api/canary?quarantined=true"
+  },
+  "trap_02": {
+    "assetId": "trap_02",
+    "quarantinedAt": "2026-10-20T10:44:49.606Z",
+    "reason": "Asset [trap_02] tripped. Tagging as quarantined and redirecting probe traffic.",
+    "status": "ISOLATED",
+    "redirectionTarget": "/api/canary?quarantined=true"
   }
 }

@@ -214,7 +214,7 @@ SpectreSync is developed by a team of five members working on cybersecurity, dec
 | Team Member | Role | GitHub Profile |
 |---|---|---|
 | Utkarsh Mishra | Agentic A.I. Backend | [@LY-UtkarshMishra-09](https://github.com/LY-UtkarshMishra-09) |
-| Bhavy Mahawar | UI/UX Developer |  |
+| Bhavy Mahawar | UI/UX Developer | [@bhavymahawar](https://github.com/bhavymahawar) |
 | Riya Aggarwal | Full - Stack Integration | [@riyaaggarwa](https://github.com/riyaaggarwa) |
 | Tanishk Soni | Backend Security  | [@Tanishkcse777](https://github.com/Tanishkcse777) |
 | Kartikey Mishra | Data Visualization | [@kartikey-svg](https://github.com/kartikey-svg) |

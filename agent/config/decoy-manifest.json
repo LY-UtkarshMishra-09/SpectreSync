@@ -14,5 +14,13 @@
     "createdAt": "2026-10-19T07:53:10.424Z",
     "lastAccessed": "2026-10-19T07:53:10.424Z",
     "syntheticPayloadType": "MOCK_CANARY_JWT"
+  },
+  "trap_02": {
+    "route": "trap_02",
+    "handlerPath": "pages\\api\\decoy\\trap_02.js",
+    "category": "canary_replenishment",
+    "createdAt": "2026-10-20T10:44:49.601Z",
+    "lastAccessed": "2026-10-20T10:44:49.601Z",
+    "syntheticPayloadType": "MOCK_CANARY_JWT"
   }
 }
