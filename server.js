@@ -13,8 +13,16 @@ app.set("trust proxy", true);
 app.use(cors());
 app.use(express.json());
 
+// Serve static assets from public/ directory
+app.use(express.static(path.join(__dirname, "public")));
+
 app.get("/", (req, res) => {
-  res.send("SpectreSync Backend API is online and listening.");
+  const indexPath = path.join(__dirname, "public", "index.html");
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      res.status(200).send("SpectreSync Backend API is online and listening.");
+    }
+  });
 });
 
 // -- Active Defense Agent Module ---------------------------------------------
