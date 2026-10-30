@@ -1,0 +1,153 @@
+{
+  "event": "JAYPEE AGENTIC AI INTERNATIONAL SUMMIT 2026",
+  "track": "TRACK 1: Agentic AI for CYBERSECURITY",
+  "project": "CyberSentinel: Multi-Agent Network Intrusion Detection & Adaptive Defense",
+  "day": "Day 1 (Level 1)",
+  "timestamp": "2026-10-30T13:41:58Z",
+  "validation_summary": {
+    "total_validation_records": 500,
+    "overall_accuracy": 0.998,
+    "macro_f1_score": 0.9973,
+    "standalone_agent1_accuracy": 0.998,
+    "standalone_agent1_macro_f1": 0.9973,
+    "consensus_agreement_rate": 0.598,
+    "evaluation_time_seconds": 9.57
+  },
+  "per_class_metrics": {
+    "BENIGN": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 223.0
+    },
+    "BRUTE_FORCE": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 60.0
+    },
+    "DOS": {
+      "precision": 1.0,
+      "recall": 0.9872,
+      "f1_score": 0.9935,
+      "support": 78.0
+    },
+    "DDOS": {
+      "precision": 0.9865,
+      "recall": 1.0,
+      "f1_score": 0.9932,
+      "support": 73.0
+    },
+    "PORT_SCAN": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 66.0
+    }
+  },
+  "evidence_status_breakdown": {
+    "BENIGN_VERIFIED": 221,
+    "TARGETED_SIGNATURE_MATCH": 198,
+    "CONFIRMED_THREAT": 78,
+    "SUSPICIOUS_MONITOR": 2,
+    "PROBATIONARY_CONTAINMENT": 1
+  },
+  "sample_agent_decisions": [
+    {
+      "record_index": 0,
+      "ground_truth": "DOS",
+      "agent1_predicted": "DOS",
+      "agent1_confidence": 0.99,
+      "agent2_anomaly_score": 0.3829,
+      "fused_final_class": "DOS",
+      "evidence_status": "TARGETED_SIGNATURE_MATCH",
+      "agreement": false,
+      "policy": "BLOCK",
+      "rationale": "Targeted Threat Override: Agent 1 matched specific attack signature for DOS with high confidence (99.0%), despite subtle statistical footprint reported by Agent 2 (score: 0.38)."
+    },
+    {
+      "record_index": 1,
+      "ground_truth": "BENIGN",
+      "agent1_predicted": "BENIGN",
+      "agent1_confidence": 1.0,
+      "agent2_anomaly_score": 0.2494,
+      "fused_final_class": "BENIGN",
+      "evidence_status": "BENIGN_VERIFIED",
+      "agreement": true,
+      "policy": "ALLOW",
+      "rationale": "Multi-Agent Consensus: Agent 1 confirmed BENIGN profile (100.0%). Agent 2 observed nominal baseline telemetry (anomaly score: 0.25)."
+    },
+    {
+      "record_index": 2,
+      "ground_truth": "DOS",
+      "agent1_predicted": "DOS",
+      "agent1_confidence": 0.94,
+      "agent2_anomaly_score": 0.4812,
+      "fused_final_class": "DOS",
+      "evidence_status": "TARGETED_SIGNATURE_MATCH",
+      "agreement": false,
+      "policy": "BLOCK",
+      "rationale": "Targeted Threat Override: Agent 1 matched specific attack signature for DOS with high confidence (94.0%), despite subtle statistical footprint reported by Agent 2 (score: 0.48)."
+    },
+    {
+      "record_index": 3,
+      "ground_truth": "BRUTE_FORCE",
+      "agent1_predicted": "BRUTE_FORCE",
+      "agent1_confidence": 1.0,
+      "agent2_anomaly_score": 0.4677,
+      "fused_final_class": "BRUTE_FORCE",
+      "evidence_status": "TARGETED_SIGNATURE_MATCH",
+      "agreement": false,
+      "policy": "BLOCK",
+      "rationale": "Targeted Threat Override: Agent 1 matched specific attack signature for BRUTE_FORCE with high confidence (100.0%), despite subtle statistical footprint reported by Agent 2 (score: 0.47)."
+    },
+    {
+      "record_index": 4,
+      "ground_truth": "BENIGN",
+      "agent1_predicted": "BENIGN",
+      "agent1_confidence": 1.0,
+      "agent2_anomaly_score": 0.2479,
+      "fused_final_class": "BENIGN",
+      "evidence_status": "BENIGN_VERIFIED",
+      "agreement": true,
+      "policy": "ALLOW",
+      "rationale": "Multi-Agent Consensus: Agent 1 confirmed BENIGN profile (100.0%). Agent 2 observed nominal baseline telemetry (anomaly score: 0.25)."
+    },
+    {
+      "record_index": 5,
+      "ground_truth": "DOS",
+      "agent1_predicted": "DOS",
+      "agent1_confidence": 1.0,
+      "agent2_anomaly_score": 0.4084,
+      "fused_final_class": "DOS",
+      "evidence_status": "TARGETED_SIGNATURE_MATCH",
+      "agreement": false,
+      "policy": "BLOCK",
+      "rationale": "Targeted Threat Override: Agent 1 matched specific attack signature for DOS with high confidence (100.0%), despite subtle statistical footprint reported by Agent 2 (score: 0.41)."
+    },
+    {
+      "record_index": 6,
+      "ground_truth": "DDOS",
+      "agent1_predicted": "DDOS",
+      "agent1_confidence": 1.0,
+      "agent2_anomaly_score": 0.4866,
+      "fused_final_class": "DDOS",
+      "evidence_status": "TARGETED_SIGNATURE_MATCH",
+      "agreement": false,
+      "policy": "BLOCK",
+      "rationale": "Targeted Threat Override: Agent 1 matched specific attack signature for DDOS with high confidence (100.0%), despite subtle statistical footprint reported by Agent 2 (score: 0.49)."
+    },
+    {
+      "record_index": 9,
+      "ground_truth": "BRUTE_FORCE",
+      "agent1_predicted": "BRUTE_FORCE",
+      "agent1_confidence": 0.99,
+      "agent2_anomaly_score": 0.3785,
+      "fused_final_class": "BRUTE_FORCE",
+      "evidence_status": "TARGETED_SIGNATURE_MATCH",
+      "agreement": false,
+      "policy": "BLOCK",
+      "rationale": "Targeted Threat Override: Agent 1 matched specific attack signature for BRUTE_FORCE with high confidence (99.0%), despite subtle statistical footprint reported by Agent 2 (score: 0.38)."
+    }
+  ]
+}

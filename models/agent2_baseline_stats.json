@@ -1,0 +1,39 @@
+{
+  "feature_names": [
+    "Destination Port",
+    "Flow Duration",
+    "Total Fwd Packets",
+    "Total Backward Packets",
+    "Flow Bytes/s",
+    "Flow Packets/s",
+    "Packet Length Mean",
+    "SYN Flag Count",
+    "ACK Flag Count",
+    "RST Flag Count"
+  ],
+  "means": {
+    "Destination Port": 5758.804,
+    "Flow Duration": 20754.120852071122,
+    "Total Fwd Packets": 44.1768,
+    "Total Backward Packets": 11.4284,
+    "Flow Bytes/s": 509266.6023063574,
+    "Flow Packets/s": 727.3914918042575,
+    "Packet Length Mean": 241.63510862270732,
+    "SYN Flag Count": 0.4404,
+    "ACK Flag Count": 0.5292,
+    "RST Flag Count": 0.2896
+  },
+  "stds": {
+    "Destination Port": 13199.40037899184,
+    "Flow Duration": 39242.0134588805,
+    "Total Fwd Packets": 50.82095876407567,
+    "Total Backward Packets": 9.5609538318763,
+    "Flow Bytes/s": 1338280.4283615558,
+    "Flow Packets/s": 1687.0753247590658,
+    "Packet Length Mean": 195.42288861747153,
+    "SYN Flag Count": 0.49653444853648715,
+    "ACK Flag Count": 0.49924649104778834,
+    "RST Flag Count": 0.45366746154674403
+  },
+  "contamination": 0.15
+}

@@ -436,6 +436,36 @@ app.post("/api/defense/mode", (req, res) => {
   res.json({ status: "ok", mode: activeDefenseAgent.getMode() });
 });
 
+// POST /api/alerts/batch -- bulk insert threat alerts (e.g. from CyberSentinel ML pipeline)
+app.post("/api/alerts/batch", (req, res) => {
+  try {
+    const alerts = Array.isArray(req.body) ? req.body : req.body.alerts || [];
+    if (!alerts.length) {
+      return res.status(400).json({ error: "No alerts provided in payload" });
+    }
+
+    const insertMany = db.transaction((rows) => {
+      for (const row of rows) {
+        insertAlert.run(
+          row.id || crypto.randomUUID(),
+          row.trap_id || row.target || "unknown",
+          row.timestamp || new Date().toISOString(),
+          row.ip || row.source_ip || "127.0.0.1",
+          row.type || row.user_agent || "Automated Threat",
+          row.status || "Triggered",
+          row.tarpit_duration || 0
+        );
+      }
+    });
+
+    insertMany(alerts);
+    res.json({ status: "ok", count: alerts.length });
+  } catch (err) {
+    console.error("Batch alert insertion error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/alerts -- return all stored alerts, newest first
 app.get("/api/alerts", (_req, res) => {
   try {

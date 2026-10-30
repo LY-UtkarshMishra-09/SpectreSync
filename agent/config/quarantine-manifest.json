@@ -15,7 +15,7 @@
   },
   "trap_02": {
     "assetId": "trap_02",
-    "quarantinedAt": "2026-10-20T10:44:49.606Z",
+    "quarantinedAt": "2026-10-30T12:51:41.023Z",
     "reason": "Asset [trap_02] tripped. Tagging as quarantined and redirecting probe traffic.",
     "status": "ISOLATED",
     "redirectionTarget": "/api/canary?quarantined=true"

@@ -1,6 +1,6 @@
 // Auto-generated synthetic decoy route handler by SpectreSync Active Defense Agent
 // Target route: trap_02
-// Generated at: 2026-10-20T10:44:49.601Z
+// Generated at: 2026-10-30T12:51:41.012Z
 
 export default async function handler(req, res) {
   const sourceIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "127.0.0.1";

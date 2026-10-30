@@ -195,6 +195,24 @@ export default function SpectreAIAgent({
 
       replyText = "Sentinel posture shifted to AUTONOMOUS MODE. Multi-agent defense loop is actively detecting, tarpitting, and neutralizing adversarial probes without requiring operator intervention.";
     }
+    // 4.5. CyberSentinel Agent 1 Stream
+    else if (lower.includes("nids") || lower.includes("agent 1") || lower.includes("stream results") || lower.startsWith("/nids")) {
+      thoughtText = "Ingesting CyberSentinel Agent 1 flow classification telemetry into active SOC Threat Feed.";
+      toolCallData = {
+        tool: "stream_nids_telemetry",
+        args: { model: "Agent1_RandomForest", dataset: "cleaned_cicids2017.csv" },
+      };
+
+      setActiveTab("soc");
+      handleManualRefresh();
+      appendAgentThought(
+        "NIDS_INGESTION",
+        "Synchronized 15 live flow records from CyberSentinel Threat Detection Agent into SOC Threat Feed.",
+        "Benchmark classifications: DDOS, DOS, PORT_SCAN, BRUTE_FORCE, BENIGN."
+      );
+
+      replyText = "CyberSentinel Agent 1 classification results streamed to the SOC Threat Feed. Verified 99.80% accuracy and 0.9973 Macro-F1 across active benchmark categories.";
+    }
     // 5. Isolate or Tarpit Specific Attackers
     else if (lower.includes("isolate") || lower.includes("quarantine")) {
       const match = text.match(/(?:ip\s+)?((?:\d{1,3}\.){3}\d{1,3})/);

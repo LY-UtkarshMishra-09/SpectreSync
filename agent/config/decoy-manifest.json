@@ -19,8 +19,8 @@
     "route": "trap_02",
     "handlerPath": "pages\\api\\decoy\\trap_02.js",
     "category": "canary_replenishment",
-    "createdAt": "2026-10-20T10:44:49.601Z",
-    "lastAccessed": "2026-10-20T10:44:49.601Z",
+    "createdAt": "2026-10-30T12:51:41.012Z",
+    "lastAccessed": "2026-10-30T12:51:41.012Z",
     "syntheticPayloadType": "MOCK_CANARY_JWT"
   }
 }

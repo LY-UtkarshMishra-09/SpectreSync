@@ -966,6 +966,42 @@ export default function SpectreSyncDashboard() {
 
     const attackProfiles = [
       {
+        target: "/api/v1/auth/keys",
+        ip: "185.220.207.161",
+        ua: "CyberSentinel-Agent1 // DDoS Packet Flood (Conf: 99.8%)",
+        score: 99,
+        status: "TARPITTED",
+        delayMs: 8500,
+        trapId: "trap_01",
+      },
+      {
+        target: "/admin/config.php",
+        ip: "192.0.2.64",
+        ua: "CyberSentinel-Agent1 // PortScan Recon (Conf: 100%)",
+        score: 93,
+        status: "TARPITTED",
+        delayMs: 4000,
+        trapId: "trap_03",
+      },
+      {
+        target: "AWS_SECRET_ACCESS_KEY",
+        ip: "203.0.113.140",
+        ua: "CyberSentinel-Agent1 // Brute-Force Patator (Conf: 100%)",
+        score: 96,
+        status: "CANARY_TRIGGERED",
+        delayMs: 6500,
+        trapId: "trap_02",
+      },
+      {
+        target: "/api/v1/vault/session",
+        ip: "198.51.100.96",
+        ua: "CyberSentinel-Agent1 // Slowloris DoS (Conf: 97.4%)",
+        score: 95,
+        status: "TARPITTED",
+        delayMs: 7700,
+        trapId: "trap_01",
+      },
+      {
         target: "/api/v1/vault",
         ip: "198.51.100.44",
         ua: "Go-http-client/2.0 (Automated Harvester)",
