@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo, useSyncExternalStore } from "react";
 import SpectreAIAgent from "./SpectreAIAgent";
+import Image from "next/image";
 import {
   RefreshCw,
   Shield,
@@ -1381,15 +1382,20 @@ export default function SpectreSyncDashboard() {
           }`}
         >
           {/* Logo & Brand Identity */}
-          <div className="flex items-center gap-3">
-            <div
-              className={`p-2 rounded-xl border shadow-inner ${
-                isLight
-                  ? "bg-amber-500/10 border-amber-500/25 text-amber-600"
-                  : "bg-cyan-500/10 border-cyan-500/20 text-cyan-400"
-              }`}
-            >
-              <Shield className="w-5 h-5" />
+          <a
+            href="/"
+            className="flex items-center gap-3 group text-left cursor-pointer transition-opacity hover:opacity-95"
+            title="SpectreSync - Return to Main View"
+          >
+            <div className="relative shrink-0 flex items-center justify-center">
+              <Image
+                src="/assets/spectresync-logo.png"
+                alt="SpectreSync Foundation Logo"
+                width={36}
+                height={36}
+                className="h-9 w-9 object-contain drop-shadow-[0_0_8px_rgba(0,255,204,0.4)] hover:rotate-180 transition-transform duration-700 select-none"
+                priority
+              />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -1418,7 +1424,7 @@ export default function SpectreSyncDashboard() {
                 Active Defense · Dynamic Trap Synthesis · Threat Entanglement
               </p>
             </div>
-          </div>
+          </a>
 
           {/* Right Header Controls: Mode Switcher, Live Sentinel Status, Sync Data, Theme Toggle */}
           <div className="flex items-center flex-wrap gap-2.5">

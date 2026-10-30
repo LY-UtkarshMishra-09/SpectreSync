@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <!-- Circular Path for Border Slogan: DETECT • TRAP • REVIEW -->
+    <path id="circlePathUpper" d="M 32,120 A 88,88 0 0,1 208,120" fill="none" />
+    <path id="circlePathLower" d="M 208,120 A 88,88 0 0,1 32,120" fill="none" />
+    <filter id="cyanGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Outer boundary and tactical notched circles -->
+  <circle cx="120" cy="120" r="114" fill="#090d16" stroke="#334155" stroke-width="2.5" />
+  <circle cx="120" cy="120" r="108" fill="none" stroke="#1e293b" stroke-width="1.5" stroke-dasharray="4 2" />
+  <circle cx="120" cy="120" r="98" fill="none" stroke="#475569" stroke-width="2" />
+
+  <!-- Circular Slogan around the border -->
+  <text font-family="'Courier New', Courier, monospace" font-size="11.5" font-weight="900" letter-spacing="3" fill="#00ffcc" filter="url(#cyanGlow)">
+    <textPath href="#circlePathUpper" startOffset="50%" text-anchor="middle">
+      DETECT • TRAP • REVIEW
+    </textPath>
+  </text>
+  <text font-family="'Courier New', Courier, monospace" font-size="9" font-weight="700" letter-spacing="2" fill="#64748b">
+    <textPath href="#circlePathLower" startOffset="50%" text-anchor="middle">
+      SPECTRESYNC FOUNDATION
+    </textPath>
+  </text>
+
+  <!-- Inner containment circle -->
+  <circle cx="120" cy="120" r="70" fill="#0c0d10" stroke="#334155" stroke-width="2" />
+  <circle cx="120" cy="120" r="54" fill="#090d16" stroke="#00ffcc" stroke-width="2" stroke-opacity="0.8" />
+
+  <!-- 3 Inward-Pointing Containment Arrows (Iconic SCP Triad Geometry) -->
+  <g transform="translate(120, 120)">
+    <!-- Arrow 1: Top (pointing DOWN to center, 0 deg) -->
+    <g transform="rotate(0)">
+      <path d="M -10,-98 L 10,-98 L 10,-72 L 20,-72 L 0,-52 L -20,-72 L -10,-72 Z" fill="#cbd5e1" stroke="#0c0d10" stroke-width="1.5" />
+    </g>
+    <!-- Arrow 2: Bottom-Right (pointing UP-LEFT to center, 120 deg) -->
+    <g transform="rotate(120)">
+      <path d="M -10,-98 L 10,-98 L 10,-72 L 20,-72 L 0,-52 L -20,-72 L -10,-72 Z" fill="#cbd5e1" stroke="#0c0d10" stroke-width="1.5" />
+    </g>
+    <!-- Arrow 3: Bottom-Left (pointing UP-RIGHT to center, 240 deg) -->
+    <g transform="rotate(240)">
+      <path d="M -10,-98 L 10,-98 L 10,-72 L 20,-72 L 0,-52 L -20,-72 L -10,-72 Z" fill="#cbd5e1" stroke="#0c0d10" stroke-width="1.5" />
+    </g>
+
+    <!-- Center Target Reticle & Containment Core -->
+    <circle cx="0" cy="0" r="28" fill="#0a0e17" stroke="#00ffcc" stroke-width="1.5" />
+    <circle cx="0" cy="0" r="14" fill="rgba(0, 255, 204, 0.25)" stroke="#00ffcc" stroke-width="1" />
+    <circle cx="0" cy="0" r="5" fill="#00ffcc" />
+    <!-- Reticle Crosshairs -->
+    <line x1="-24" y1="0" x2="-14" y2="0" stroke="#00ffcc" stroke-width="2" />
+    <line x1="14" y1="0" x2="24" y2="0" stroke="#00ffcc" stroke-width="2" />
+    <line x1="0" y1="-24" x2="0" y2="-14" stroke="#00ffcc" stroke-width="2" />
+    <line x1="0" y1="14" x2="0" y2="24" stroke="#00ffcc" stroke-width="2" />
+  </g>
+</svg>
+

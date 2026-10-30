@@ -1,0 +1,23 @@
+{
+  "feature_names": [
+    "Destination Port",
+    "Flow Duration",
+    "Total Fwd Packets",
+    "Total Backward Packets",
+    "Flow Bytes/s",
+    "Flow Packets/s",
+    "Packet Length Mean",
+    "SYN Flag Count",
+    "ACK Flag Count",
+    "RST Flag Count"
+  ],
+  "classes": [
+    "BENIGN",
+    "BRUTE_FORCE",
+    "DDOS",
+    "DOS",
+    "PORT_SCAN"
+  ],
+  "accuracy": 0.998,
+  "macro_f1": 0.9973491332016678
+}
