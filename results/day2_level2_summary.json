@@ -3,10 +3,10 @@
   "track": "TRACK 1: Agentic AI for CYBERSECURITY",
   "system": "CyberSentinel: 5-Agent Network Intrusion Detection & Adaptive Defense",
   "day": "Day 2 (Level 2 Final Submission)",
-  "timestamp": "2026-10-31T06:18:32Z",
+  "timestamp": "2026-10-31T08:30:02Z",
   "dataset_evaluated": "__pycache__/cyber-hidden/Cyber/hidden/records.csv",
   "total_records_processed": 200,
-  "elapsed_time_seconds": 3.49,
+  "elapsed_time_seconds": 3.56,
   "agent5_replay_defense_stats": {
     "total_allowed": 102,
     "total_blocked": 98,
