@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo, useSyncExternalStore } from "react";
 import SpectreAIAgent from "./SpectreAIAgent";
 import Image from "next/image";
+import Link from "next/link";
 import {
   RefreshCw,
   Shield,
@@ -31,6 +33,8 @@ import {
   Hourglass,
   Check,
   ShieldCheck,
+  FileText,
+  Download,
 } from "lucide-react";
 
 // Known decoy path and asset mappings for realistic enterprise honeytokens
@@ -515,10 +519,10 @@ function GhostTopology({
     <div className="space-y-6">
       {/* Live Stats HUD Bar */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className={`backdrop-blur-xl border rounded-2xl p-5 shadow-xl transition-all duration-200 ${
+        <div className={`border rounded-2xl p-5 shadow-xs transition-all duration-200 ${
           isLight
-            ? "bg-white/85 border-slate-200/90 shadow-slate-200/40 text-slate-900"
-            : "bg-neutral-900/40 border-white/8 shadow-black/20 text-neutral-200"
+            ? "bg-white border-slate-200 text-slate-900"
+            : "bg-[#111827]/95 border-slate-800 text-neutral-200"
         }`}>
           <div className="flex items-center justify-between">
             <span className={`text-[11px] font-medium uppercase tracking-wider ${
@@ -527,7 +531,7 @@ function GhostTopology({
               Active Deception Surface
             </span>
             <div className={`p-1.5 rounded-lg ${
-              isLight ? "bg-amber-500/10 text-amber-600" : "bg-cyan-500/10 text-cyan-400"
+              isLight ? "bg-amber-500/10 text-amber-600" : "bg-emerald-500/10 text-emerald-400"
             }`}>
               <Layers className="w-4 h-4" />
             </div>
@@ -546,10 +550,10 @@ function GhostTopology({
           </div>
         </div>
 
-        <div className={`backdrop-blur-xl border rounded-2xl p-5 shadow-xl transition-all duration-200 ${
+        <div className={`border rounded-2xl p-5 shadow-xs transition-all duration-200 ${
           isLight
-            ? "bg-white/85 border-slate-200/90 shadow-slate-200/40 text-slate-900"
-            : "bg-neutral-900/40 border-white/8 shadow-black/20 text-neutral-200"
+            ? "bg-white border-slate-200 text-slate-900"
+            : "bg-[#111827]/95 border-slate-800 text-neutral-200"
         }`}>
           <div className="flex items-center justify-between">
             <span className={`text-[11px] font-medium uppercase tracking-wider ${
@@ -577,10 +581,10 @@ function GhostTopology({
           </div>
         </div>
 
-        <div className={`backdrop-blur-xl border rounded-2xl p-5 shadow-xl transition-all duration-200 ${
+        <div className={`border rounded-2xl p-5 shadow-xs transition-all duration-200 ${
           isLight
-            ? "bg-white/85 border-slate-200/90 shadow-slate-200/40 text-slate-900"
-            : "bg-neutral-900/40 border-white/8 shadow-black/20 text-neutral-200"
+            ? "bg-white border-slate-200 text-slate-900"
+            : "bg-[#111827]/95 border-slate-800 text-neutral-200"
         }`}>
           <div className="flex items-center justify-between">
             <span className={`text-[11px] font-medium uppercase tracking-wider ${
@@ -606,22 +610,22 @@ function GhostTopology({
       </div>
 
       {/* Interactive Canvas Graph Container */}
-      <div className={`relative backdrop-blur-xl border rounded-2xl overflow-hidden h-155 w-full shadow-2xl transition-all duration-200 ${
+      <div className={`relative border rounded-2xl overflow-hidden h-155 w-full shadow-lg transition-all duration-200 ${
         isLight
-          ? "bg-white/75 border-slate-200/90 shadow-slate-200/50"
-          : "bg-neutral-900/40 border-white/8 shadow-black/40"
+          ? "bg-white border-slate-200"
+          : "bg-[#111827]/95 border-slate-800"
       }`}>
         <canvas ref={canvasRef} className="w-full h-full block cursor-crosshair" />
 
         {/* Top-Left Tactical HUD Overlay & Simplified 3-Status Legend */}
         <div className="absolute top-4 left-4 pointer-events-none space-y-2.5">
-          <div className={`backdrop-blur-md border rounded-xl px-4 py-2.5 shadow-lg ${
+          <div className={`backdrop-blur-sm border rounded-xl px-4 py-2.5 shadow-md ${
             isLight
               ? "bg-white/95 border-slate-200 text-slate-900"
-              : "bg-neutral-950/80 border-white/8 text-white"
+              : "bg-[#0B0F17]/95 border-slate-800 text-white"
           }`}>
             <div className="text-xs font-semibold flex items-center gap-2">
-              <Radar className={`w-3.5 h-3.5 ${isLight ? "text-amber-600" : "text-cyan-400"}`} />
+              <Radar className={`w-3.5 h-3.5 ${isLight ? "text-amber-600" : "text-emerald-400"}`} />
               <span>ACTIVE DECEPTION TOPOLOGY</span>
             </div>
             <div className={`text-[10px] font-mono mt-0.5 ${isLight ? "text-slate-500" : "text-neutral-400"}`}>
@@ -630,10 +634,10 @@ function GhostTopology({
           </div>
 
           {/* Clean 3-Status Legend Card */}
-          <div className={`backdrop-blur-md border rounded-xl p-3 text-xs space-y-2 shadow-lg ${
+          <div className={`backdrop-blur-sm border rounded-xl p-3 text-xs space-y-2 shadow-md ${
             isLight
               ? "bg-white/95 border-slate-200 text-slate-900"
-              : "bg-neutral-950/80 border-white/8 text-white"
+              : "bg-[#0B0F17]/95 border-slate-800 text-white"
           }`}>
             <div className={`text-[10px] uppercase font-mono font-semibold tracking-wider mb-1 ${
               isLight ? "text-slate-500" : "text-neutral-400"
@@ -680,12 +684,12 @@ function GhostTopology({
         <div className="absolute top-4 right-4 flex gap-2">
           <button
             onClick={() => setFilterTriggeredOnly((prev) => !prev)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-all duration-200 cursor-pointer backdrop-blur-md ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-all duration-200 cursor-pointer backdrop-blur-sm ${
               filterTriggeredOnly
                 ? "bg-rose-500/20 text-rose-500 border-rose-500/40 shadow-xs"
                 : isLight
                 ? "bg-white/90 text-slate-700 border-slate-200 hover:bg-slate-100"
-                : "bg-neutral-950/70 text-neutral-400 border-white/8 hover:text-white hover:bg-white/4"
+                : "bg-[#0B0F17]/90 text-neutral-400 border-slate-800 hover:text-white hover:bg-white/4"
             }`}
           >
             {filterTriggeredOnly ? "Showing Tripped Traps Only" : "Show All Nodes"}
@@ -693,10 +697,10 @@ function GhostTopology({
           <button
             onClick={onRefresh}
             disabled={isRefreshing}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 flex items-center gap-1.5 cursor-pointer backdrop-blur-md shadow-xs ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 flex items-center gap-1.5 cursor-pointer backdrop-blur-sm shadow-xs ${
               isLight
                 ? "bg-white/90 text-amber-700 border border-amber-500/30 hover:bg-amber-50/50"
-                : "bg-neutral-950/70 text-cyan-400 border border-cyan-500/30 hover:bg-white/4"
+                : "bg-[#0B0F17]/90 text-emerald-400 border border-emerald-500/25 hover:bg-white/4"
             }`}
           >
             <RefreshCw className={`w-3 h-3 ${isRefreshing ? "animate-spin" : ""}`} />
@@ -707,10 +711,10 @@ function GhostTopology({
         {/* Node Inspector Tooltip - Simplified, Clean DataDog/Linear Style */}
         {hoveredNode && (
           <div
-            className={`absolute pointer-events-none backdrop-blur-xl border p-3 rounded-xl shadow-2xl text-xs space-y-1 z-20 min-w-48 ${
+            className={`absolute pointer-events-none backdrop-blur-sm border p-3 rounded-xl shadow-xl text-xs space-y-1 z-20 min-w-48 ${
               isLight
                 ? "bg-white/95 border-slate-200 text-slate-800"
-                : "bg-neutral-950/95 border-white/10 text-white"
+                : "bg-[#0B0F17]/95 border-slate-800 text-white"
             }`}
             style={{
               left: Math.min(hoveredNode.x + 16, 760),
@@ -727,7 +731,7 @@ function GhostTopology({
               Class: {hoveredNode.category}
             </div>
             <div className={`text-[11px] font-medium ${
-              hoveredNode.isTriggered ? "text-rose-500" : isLight ? "text-amber-600" : "text-cyan-400"
+              hoveredNode.isTriggered ? "text-rose-500" : isLight ? "text-amber-600" : "text-emerald-400"
             }`}>
               Status: {hoveredNode.status}
             </div>
@@ -746,7 +750,7 @@ function GhostTopology({
           isLight ? "text-slate-500" : "text-neutral-500"
         }`}>
           <span>MESH ENCRYPTION: SHA-256 CANARY TOKENS</span>
-          <span className={isLight ? "text-amber-700 font-semibold" : "text-cyan-400"}>
+          <span className={isLight ? "text-amber-700 font-semibold" : "text-emerald-400"}>
             BEHAVIORAL TARPIT RADAR ENGAGED
           </span>
         </div>
@@ -1396,7 +1400,7 @@ export default function SpectreSyncDashboard() {
       className={`min-h-screen font-sans relative overflow-x-hidden pb-28 transition-colors duration-200 ${
         isLight
           ? "bg-[#f8fafc] text-slate-900 selection:bg-amber-500/20 selection:text-amber-900"
-          : "bg-[#090d16] text-neutral-200 selection:bg-cyan-500/20 selection:text-cyan-200"
+          : "bg-[#0B0F17] text-neutral-200 selection:bg-emerald-500/20 selection:text-emerald-200"
       }`}
     >
       {/* Ambient top gradient glow */}
@@ -1411,14 +1415,14 @@ export default function SpectreSyncDashboard() {
       {/* Floating Top Command Bar */}
       <header className="sticky top-4 z-40 mx-auto max-w-7xl px-4 mb-6">
         <div
-          className={`backdrop-blur-xl border shadow-2xl rounded-2xl px-5 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-4 transition-all duration-200 ${
+          className={`backdrop-blur-sm border shadow-lg rounded-2xl px-5 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-4 transition-all duration-200 ${
             isLight
-              ? "bg-white/85 border-slate-200/90 shadow-slate-200/50"
-              : "bg-[#0f172a]/70 border-white/10 shadow-black/50"
+              ? "bg-white/95 border-slate-200 shadow-slate-100/60"
+              : "bg-[#111827]/95 border-slate-800 shadow-black/20"
           }`}
         >
           {/* Logo & Brand Identity */}
-          <a
+          <Link
             href="/"
             className="flex items-center gap-3 group text-left cursor-pointer transition-opacity hover:opacity-95"
             title="SpectreSync - Return to Main View"
@@ -1429,7 +1433,7 @@ export default function SpectreSyncDashboard() {
                 alt="SpectreSync Foundation Logo"
                 width={36}
                 height={36}
-                className="h-9 w-9 object-contain drop-shadow-[0_0_8px_rgba(0,255,204,0.4)] hover:rotate-180 transition-transform duration-700 select-none"
+                className="h-9 w-9 object-contain hover:rotate-180 transition-transform duration-700 select-none"
                 priority
               />
             </div>
@@ -1446,7 +1450,7 @@ export default function SpectreSyncDashboard() {
                   className={`text-[10px] uppercase tracking-wider font-mono px-2 py-0.5 rounded-full border ${
                     isLight
                       ? "text-amber-700 bg-amber-500/10 border-amber-500/25"
-                      : "text-cyan-400 bg-cyan-500/10 border-cyan-500/20"
+                      : "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
                   }`}
                 >
                   Autonomous Mesh
@@ -1460,7 +1464,7 @@ export default function SpectreSyncDashboard() {
                 Active Defense · Dynamic Trap Synthesis · Threat Entanglement
               </p>
             </div>
-          </a>
+          </Link>
 
           {/* Right Header Controls: Mode Switcher, Live Sentinel Status, Sync Data, Theme Toggle */}
           <div className="flex items-center flex-wrap gap-2.5">
@@ -1469,7 +1473,7 @@ export default function SpectreSyncDashboard() {
               className={`flex items-center p-0.5 rounded-xl text-xs border ${
                 isLight
                   ? "bg-slate-100 border-slate-200"
-                  : "bg-neutral-950/70 border-white/8"
+                  : "bg-[#0B0F17]/90 border-slate-800"
               }`}
             >
               <button
@@ -1485,14 +1489,14 @@ export default function SpectreSyncDashboard() {
                   sentinelMode === "autonomous"
                     ? isLight
                       ? "bg-amber-500/20 text-amber-800 border border-amber-500/30 shadow-xs"
-                      : "bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 shadow-sm"
+                      : "bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 shadow-xs"
                     : isLight
                     ? "text-slate-600 hover:text-slate-900"
                     : "text-neutral-400 hover:text-white"
                 }`}
                 title="Autonomous Mode: Sentinel detects, synthesizes, and tarpits threats with 0 human intervention"
               >
-                <Cpu className={`w-3 h-3 ${isLight ? "text-amber-600" : "text-cyan-400"}`} />
+                <Cpu className={`w-3 h-3 ${isLight ? "text-amber-600" : "text-emerald-400"}`} />
                 <span>Autonomous</span>
               </button>
               <button
@@ -1508,7 +1512,7 @@ export default function SpectreSyncDashboard() {
                   sentinelMode === "supervised"
                     ? isLight
                       ? "bg-amber-500/20 text-amber-800 border border-amber-500/30 shadow-xs"
-                      : "bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-sm"
+                      : "bg-amber-500/15 text-amber-300 border border-amber-500/25 shadow-xs"
                     : isLight
                     ? "text-slate-600 hover:text-slate-900"
                     : "text-neutral-400 hover:text-white"
@@ -1525,12 +1529,12 @@ export default function SpectreSyncDashboard() {
               className={`hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border ${
                 isLight
                   ? "bg-amber-500/10 text-amber-800 border-amber-500/25"
-                  : "bg-cyan-500/10 text-cyan-300 border-cyan-500/20"
+                  : "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
               }`}
             >
               <span
-                className={`w-1.5 h-1.5 rounded-full animate-ping ${
-                  isLight ? "bg-amber-600" : "bg-cyan-400"
+                className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                  isLight ? "bg-amber-600" : "bg-emerald-400"
                 }`}
               />
               <span>{sentinelStatus}</span>
@@ -1543,14 +1547,14 @@ export default function SpectreSyncDashboard() {
               className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all flex items-center gap-1.5 cursor-pointer shadow-xs ${
                 isLight
                   ? "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700"
-                  : "bg-neutral-950/60 hover:bg-white/5 border-white/8 text-neutral-300 hover:text-white"
+                  : "bg-[#0B0F17]/90 hover:bg-white/5 border-slate-800 text-neutral-300 hover:text-white"
               }`}
               title="Synchronize fresh telemetry and alert logs"
             >
               <RefreshCw
                 className={`w-3 h-3 ${
                   isRefreshing
-                    ? `animate-spin ${isLight ? "text-amber-600" : "text-cyan-400"}`
+                    ? `animate-spin ${isLight ? "text-amber-600" : "text-emerald-400"}`
                     : ""
                 }`}
               />
@@ -1564,15 +1568,15 @@ export default function SpectreSyncDashboard() {
                 isAIAgentOpen
                   ? isLight
                     ? "bg-amber-500/20 text-amber-900 border-amber-500/40"
-                    : "bg-cyan-500/25 text-cyan-300 border-cyan-500/50 shadow-cyan-500/20 shadow-sm"
+                    : "bg-emerald-500/20 text-emerald-300 border-emerald-500/35 shadow-xs"
                   : isLight
                   ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 border-amber-500/30"
-                  : "bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border-cyan-500/30 hover:border-cyan-500/50"
+                  : "bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-300 border-emerald-500/20 hover:border-emerald-500/30"
               }`}
               title="Toggle Spectre AI (Ctrl+K)"
               aria-label="Toggle Spectre AI"
             >
-              <Bot className="w-3.5 h-3.5 text-cyan-400" />
+              <Bot className="w-3.5 h-3.5 text-emerald-400" />
               <span>Spectre AI</span>
               <kbd className="hidden md:inline-block px-1.5 py-0.5 text-[9px] font-mono rounded bg-black/30 text-neutral-400 border border-white/10">
                 Ctrl+K
@@ -1585,7 +1589,7 @@ export default function SpectreSyncDashboard() {
               className={`p-1.5 rounded-xl border transition-all duration-200 cursor-pointer shadow-xs flex items-center justify-center ${
                 isLight
                   ? "bg-slate-100 hover:bg-slate-200 border-slate-200 text-amber-600"
-                  : "bg-neutral-950/70 hover:bg-white/5 border-white/10 text-cyan-400"
+                  : "bg-[#0B0F17]/90 hover:bg-white/5 border-slate-800 text-amber-400"
               }`}
               title={isLight ? "Switch to Dark Mode" : "Switch to Light Mode"}
               aria-label="Toggle Theme"
@@ -1605,12 +1609,12 @@ export default function SpectreSyncDashboard() {
         {/* Canary Activation & Redirection Toast Banner */}
         {toastNotification && (
           <div
-            className={`transition-all duration-300 backdrop-blur-xl border rounded-2xl p-4 shadow-2xl flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 ${
+            className={`transition-all duration-300 backdrop-blur-sm border rounded-2xl p-4 shadow-xl flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 ${
               toastNotification.error
                 ? "bg-rose-950/70 border-rose-500/40 text-rose-200 shadow-rose-950/40"
                 : isLight
                 ? "bg-white/95 border-amber-500/30 text-slate-800 shadow-amber-900/10"
-                : "bg-cyan-950/60 border-cyan-500/30 text-cyan-200 shadow-cyan-950/40"
+                : "bg-emerald-950/40 border-emerald-500/30 text-emerald-200 shadow-black/20"
             }`}
           >
             <div className="flex items-center gap-3">
@@ -1620,7 +1624,7 @@ export default function SpectreSyncDashboard() {
                     ? "bg-rose-500/10 border-rose-500/30 text-rose-400"
                     : isLight
                     ? "bg-amber-500/15 border-amber-500/30 text-amber-700"
-                    : "bg-cyan-500/10 border-cyan-500/30 text-cyan-400"
+                    : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
                 }`}
               >
                 {toastNotification.error ? (
@@ -1643,7 +1647,7 @@ export default function SpectreSyncDashboard() {
                       className={`px-2 py-0.5 rounded-full font-mono text-[10px] border ${
                         isLight
                           ? "bg-amber-500/15 border-amber-500/30 text-amber-800"
-                          : "bg-cyan-500/20 border-cyan-500/40 text-cyan-300"
+                          : "bg-emerald-500/15 border-emerald-500/25 text-emerald-300"
                       }`}
                     >
                       {toastNotification.trapId}
@@ -1665,12 +1669,12 @@ export default function SpectreSyncDashboard() {
                 className={`flex items-center gap-1.5 px-3 py-1 rounded-lg border text-[11px] font-mono ${
                   isLight
                     ? "bg-slate-100 border-slate-200 text-slate-600"
-                    : "bg-neutral-900/80 border-white/10 text-neutral-400"
+                    : "bg-[#0B0F17] border-slate-800 text-neutral-400"
                 }`}
               >
                 <RefreshCw
                   className={`w-3 h-3 animate-spin ${
-                    isLight ? "text-amber-600" : "text-cyan-400"
+                    isLight ? "text-amber-600" : "text-emerald-400"
                   }`}
                 />
                 <span>Redirecting...</span>
@@ -1685,15 +1689,15 @@ export default function SpectreSyncDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Target Repository Input Card */}
               <div
-                className={`lg:col-span-2 backdrop-blur-xl border rounded-2xl p-6 shadow-xl transition-all duration-200 space-y-4 ${
+                className={`lg:col-span-2 border rounded-2xl p-6 shadow-xs transition-all duration-200 space-y-4 ${
                   isLight
-                    ? "bg-white/85 border-slate-200/90 shadow-slate-200/50"
-                    : "bg-neutral-900/40 border-white/8 shadow-black/20"
+                    ? "bg-white border-slate-200 shadow-slate-100/60"
+                    : "bg-[#111827]/95 border-slate-800 shadow-black/10"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Server className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-cyan-400"}`} />
+                    <Server className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-emerald-400"}`} />
                     <h2
                       className={`text-xs uppercase tracking-wider font-semibold ${
                         isLight ? "text-slate-800" : "text-neutral-300"
@@ -1711,7 +1715,7 @@ export default function SpectreSyncDashboard() {
                   </span>
                 </div>
                 <p
-                  className={`text-xs leading-relaxed ${
+                  className={`text-xs leading-relaxed max-w-2xl ${
                     isLight ? "text-slate-600" : "text-neutral-400"
                   }`}
                 >
@@ -1727,16 +1731,16 @@ export default function SpectreSyncDashboard() {
                     className={`flex-1 rounded-xl px-4 py-2.5 text-xs font-mono transition-all outline-none border ${
                       isLight
                         ? "bg-slate-50 border-slate-300 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 text-slate-900 placeholder:text-slate-400"
-                        : "bg-neutral-950/80 border-white/8 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 text-neutral-200 placeholder:text-neutral-600"
+                        : "bg-[#0B0F17] border-slate-800 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 text-neutral-200 placeholder:text-neutral-600"
                     }`}
                   />
                   <button
                     onClick={handleDeploy}
                     disabled={isDeploying}
-                    className={`font-semibold px-5 py-2.5 rounded-xl text-xs transition-all duration-200 shadow-lg active:scale-[0.98] whitespace-nowrap cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 ${
+                    className={`font-semibold px-5 py-2.5 rounded-xl text-xs transition-all duration-200 shadow-xs active:scale-[0.98] whitespace-nowrap cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 ${
                       isLight
                         ? "bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/25"
-                        : "bg-linear-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-neutral-950 shadow-cyan-500/20"
+                        : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-black/15"
                     }`}
                   >
                     {isDeploying ? (
@@ -1746,7 +1750,7 @@ export default function SpectreSyncDashboard() {
                       </>
                     ) : (
                       <>
-                        <Sparkles className="w-3.5 h-3.5" />
+                        <Shield className="w-3.5 h-3.5" />
                         Deploy Mesh & Bind Traps
                       </>
                     )}
@@ -1756,15 +1760,15 @@ export default function SpectreSyncDashboard() {
 
               {/* Quick Metrics Bento Card */}
               <div
-                className={`backdrop-blur-xl border rounded-2xl p-6 shadow-xl flex flex-col justify-between transition-all duration-200 ${
+                className={`border rounded-2xl p-6 shadow-xs flex flex-col justify-between transition-all duration-200 ${
                   isLight
-                    ? "bg-white/85 border-slate-200/90 shadow-slate-200/50"
-                    : "bg-neutral-900/40 border-white/8 shadow-black/20"
+                    ? "bg-white border-slate-200 shadow-slate-100/60"
+                    : "bg-[#111827]/95 border-slate-800 shadow-black/10"
                 }`}
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <Radio className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-cyan-400"}`} />
+                    <Radio className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-emerald-400"}`} />
                     <h2
                       className={`text-xs uppercase tracking-wider font-semibold ${
                         isLight ? "text-slate-800" : "text-neutral-300"
@@ -1791,7 +1795,7 @@ export default function SpectreSyncDashboard() {
                           sentinelMode === "autonomous"
                             ? isLight
                               ? "text-amber-700"
-                              : "text-cyan-400"
+                              : "text-emerald-400"
                             : isLight
                             ? "text-amber-800"
                             : "text-amber-300"
@@ -1805,7 +1809,7 @@ export default function SpectreSyncDashboard() {
 
                 <div
                   className={`pt-4 border-t flex items-center justify-between text-[11px] ${
-                    isLight ? "border-slate-200 text-slate-500" : "border-white/4 text-neutral-500"
+                    isLight ? "border-slate-200 text-slate-500" : "border-slate-800 text-neutral-500"
                   }`}
                 >
                   <span>Engine: SQLite WAL</span>
@@ -1819,7 +1823,7 @@ export default function SpectreSyncDashboard() {
             {/* Supervised Mode Pending Approval Banner */}
             {pendingApproval && (
               <div
-                className={`backdrop-blur-xl border rounded-2xl p-5 shadow-2xl space-y-3 animate-in fade-in slide-in-from-top-2 ${
+                className={`border rounded-2xl p-5 shadow-md space-y-3 animate-in fade-in slide-in-from-top-2 ${
                   isLight
                     ? "bg-amber-50 border-amber-300 shadow-amber-900/10 text-slate-800"
                     : "bg-amber-950/40 border-amber-500/30 shadow-amber-950/20 text-neutral-200"
@@ -1870,15 +1874,15 @@ export default function SpectreSyncDashboard() {
 
             {/* AI Security Agent Reasoning Panel ("Autonomous Defense Sentinel") */}
             <div
-              className={`backdrop-blur-xl border rounded-2xl p-6 shadow-xl space-y-4 transition-all duration-200 ${
+              className={`border rounded-2xl p-6 shadow-xs space-y-4 transition-all duration-200 ${
                 isLight
-                  ? "bg-white/85 border-slate-200/90 shadow-slate-200/50"
-                  : "bg-neutral-900/40 border-white/8 shadow-black/20"
+                  ? "bg-white border-slate-200 shadow-slate-100/60"
+                  : "bg-[#111827]/95 border-slate-800 shadow-black/10"
               }`}
             >
               <div
                 className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b pb-3 ${
-                  isLight ? "border-slate-200" : "border-white/6"
+                  isLight ? "border-slate-200" : "border-slate-800"
                 }`}
               >
                 <div className="flex items-center gap-2.5">
@@ -1886,7 +1890,7 @@ export default function SpectreSyncDashboard() {
                     className={`p-1.5 rounded-lg border ${
                       isLight
                         ? "bg-amber-500/10 border-amber-500/25 text-amber-700"
-                        : "bg-cyan-500/10 border-cyan-500/20 text-cyan-400"
+                        : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
                     }`}
                   >
                     <Bot className="w-4 h-4" />
@@ -1904,14 +1908,14 @@ export default function SpectreSyncDashboard() {
                         className={`px-2 py-0.5 rounded-full text-[10px] font-mono border ${
                           isLight
                             ? "bg-amber-500/10 border-amber-500/25 text-amber-800"
-                            : "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
+                            : "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
                         }`}
                       >
                         {sentinelStatus}
                       </span>
                     </div>
                     <p
-                      className={`text-[11px] mt-0.5 ${
+                      className={`text-[11px] mt-0.5 max-w-2xl ${
                         isLight ? "text-slate-500" : "text-neutral-400"
                       }`}
                     >
@@ -1927,7 +1931,7 @@ export default function SpectreSyncDashboard() {
                 >
                   <span
                     className={`w-2 h-2 rounded-full animate-pulse ${
-                      isLight ? "bg-amber-600" : "bg-cyan-400"
+                      isLight ? "bg-amber-600" : "bg-emerald-400"
                     }`}
                   />
                   <span>Sentinel Core Online</span>
@@ -1939,23 +1943,23 @@ export default function SpectreSyncDashboard() {
                 className={`border rounded-xl p-4 max-h-72 overflow-y-auto space-y-3 font-mono text-xs ${
                   isLight
                     ? "bg-slate-50 border-slate-200 text-slate-800"
-                    : "bg-neutral-950/80 border-white/6 text-neutral-200"
+                    : "bg-[#0B0F17] border-slate-800 text-neutral-200"
                 }`}
               >
                 {agentThoughts.map((entry, idx) => (
                   <div
                     key={idx}
                     className={`space-y-1 pb-2 border-b last:border-b-0 last:pb-0 ${
-                      isLight ? "border-slate-200" : "border-white/4"
+                      isLight ? "border-slate-200" : "border-slate-800/60"
                     }`}
                   >
                     <div className="flex items-center justify-between text-[10px]">
                       <span
                         className={`font-semibold flex items-center gap-1.5 ${
-                          isLight ? "text-amber-700" : "text-cyan-400"
+                          isLight ? "text-amber-700" : "text-emerald-400"
                         }`}
                       >
-                        <Cpu className={`w-3 h-3 ${isLight ? "text-amber-600" : "text-cyan-400"}`} />
+                        <Cpu className={`w-3 h-3 ${isLight ? "text-amber-600" : "text-emerald-400"}`} />
                         [{entry.stage}]
                       </span>
                       <span className={isLight ? "text-slate-400" : "text-neutral-500"}>{entry.time}</span>
@@ -1964,7 +1968,7 @@ export default function SpectreSyncDashboard() {
                       className={`leading-relaxed pl-4 border-l ${
                         isLight
                           ? "text-slate-700 border-amber-500/40"
-                          : "text-neutral-200 border-cyan-500/30"
+                          : "text-neutral-200 border-emerald-500/30"
                       }`}
                     >
                       {entry.thought}
@@ -1982,19 +1986,19 @@ export default function SpectreSyncDashboard() {
 
             {/* Agent Execution Telemetry Stream */}
             <div
-              className={`backdrop-blur-xl border rounded-2xl p-6 shadow-xl space-y-4 transition-all duration-200 ${
+              className={`border rounded-2xl p-6 shadow-xs space-y-4 transition-all duration-200 ${
                 isLight
-                  ? "bg-white/85 border-slate-200/90 shadow-slate-200/50"
-                  : "bg-neutral-900/40 border-white/8 shadow-black/20"
+                  ? "bg-white border-slate-200 shadow-slate-100/60"
+                  : "bg-[#111827]/95 border-slate-800 shadow-black/10"
               }`}
             >
               <div
                 className={`flex items-center justify-between border-b pb-3 ${
-                  isLight ? "border-slate-200" : "border-white/6"
+                  isLight ? "border-slate-200" : "border-slate-800"
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <Terminal className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-cyan-400"}`} />
+                  <Terminal className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-emerald-400"}`} />
                   <h3
                     className={`text-xs uppercase tracking-wider font-semibold ${
                       isLight ? "text-slate-800" : "text-neutral-300"
@@ -2016,7 +2020,7 @@ export default function SpectreSyncDashboard() {
                 className={`border rounded-xl p-4 h-60 overflow-y-auto space-y-2 font-mono text-xs ${
                   isLight
                     ? "bg-slate-50 border-slate-200 text-slate-800"
-                    : "bg-neutral-950/80 border-white/6 text-neutral-200"
+                    : "bg-[#0B0F17] border-slate-800 text-neutral-200"
                 }`}
               >
                 {logs.length === 0 ? (
@@ -2043,7 +2047,7 @@ export default function SpectreSyncDashboard() {
                               : "text-amber-300"
                             : isLight
                             ? "text-amber-800"
-                            : "text-cyan-400"
+                            : "text-emerald-400"
                         }
                       >
                         {log.message}
@@ -2057,15 +2061,15 @@ export default function SpectreSyncDashboard() {
             {/* Synthesized Decoys Bento Card */}
             {decoys.length > 0 && (
               <div
-                className={`backdrop-blur-xl border rounded-2xl p-6 shadow-xl space-y-4 transition-all duration-200 ${
+                className={`border rounded-2xl p-6 shadow-xs space-y-4 transition-all duration-200 ${
                   isLight
-                    ? "bg-white/85 border-slate-200/90 shadow-slate-200/50"
-                    : "bg-neutral-900/40 border-white/8 shadow-black/20"
+                    ? "bg-white border-slate-200 shadow-slate-100/60"
+                    : "bg-[#111827]/95 border-slate-800 shadow-black/10"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Key className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-cyan-400"}`} />
+                    <Key className={`w-4 h-4 ${isLight ? "text-amber-600" : "text-emerald-400"}`} />
                     <h3
                       className={`text-xs uppercase tracking-wider font-semibold ${
                         isLight ? "text-slate-800" : "text-neutral-300"
@@ -2081,7 +2085,7 @@ export default function SpectreSyncDashboard() {
 
                 <div
                   className={`overflow-x-auto rounded-xl border ${
-                    isLight ? "border-slate-200" : "border-white/6"
+                    isLight ? "border-slate-200" : "border-slate-800"
                   }`}
                 >
                   <table className="w-full text-left text-xs border-collapse">
@@ -2090,7 +2094,7 @@ export default function SpectreSyncDashboard() {
                         className={`border-b font-medium ${
                           isLight
                             ? "bg-slate-100/70 border-slate-200 text-slate-600"
-                            : "bg-white/2 border-white/6 text-neutral-400"
+                            : "bg-[#0B0F17] border-slate-800 text-neutral-400"
                         }`}
                       >
                         <th className="py-3 px-4">Trap ID</th>
@@ -2103,7 +2107,7 @@ export default function SpectreSyncDashboard() {
                     </thead>
                     <tbody
                       className={`divide-y ${
-                        isLight ? "divide-slate-200" : "divide-white/4"
+                        isLight ? "divide-slate-200" : "divide-slate-800"
                       }`}
                     >
                       {decoys.map((decoy, idx) => {
@@ -2119,7 +2123,7 @@ export default function SpectreSyncDashboard() {
                           >
                             <td
                               className={`py-3 px-4 font-mono font-semibold ${
-                                isLight ? "text-amber-700" : "text-cyan-400"
+                                isLight ? "text-amber-700" : "text-emerald-400"
                               }`}
                             >
                               {trapId}
@@ -2143,7 +2147,7 @@ export default function SpectreSyncDashboard() {
                                 className={`px-2 py-0.5 rounded-full border text-[10px] font-medium uppercase ${
                                   isLight
                                     ? "bg-slate-100 border-slate-200 text-slate-700"
-                                    : "bg-white/4 border-white/8 text-neutral-300"
+                                    : "bg-white/4 border-slate-800 text-neutral-300"
                                 }`}
                               >
                                 {decoy.category || decoy.trap_type || "secret"}
@@ -2153,7 +2157,7 @@ export default function SpectreSyncDashboard() {
                               className={`py-3 px-4 font-mono transition-colors ${
                                 isLight
                                   ? "text-slate-600 hover:text-amber-700"
-                                  : "text-neutral-400 hover:text-cyan-300"
+                                  : "text-neutral-400 hover:text-emerald-300"
                               }`}
                             >
                               {decoy.endpoint || decoy.endpoint_url}
@@ -2210,15 +2214,15 @@ export default function SpectreSyncDashboard() {
           <div className="space-y-6">
             {/* 1. AI SOC Greeter Card & Multi-Agent Defense Controls */}
             <div
-              className={`backdrop-blur-xl border rounded-2xl p-5 sm:p-6 shadow-xl transition-all duration-200 ${
+              className={`border rounded-2xl p-5 sm:p-6 shadow-xs transition-all duration-200 ${
                 isLight
-                  ? "bg-white/85 border-slate-200/90 shadow-slate-200/40 text-slate-900"
-                  : "bg-[#090D16]/90 border-slate-800 shadow-black/40 text-neutral-200"
+                  ? "bg-white border-slate-200 shadow-slate-100/60 text-slate-900"
+                  : "bg-[#111827]/95 border-slate-800 shadow-black/10 text-neutral-200"
               }`}
             >
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-4 border-b border-white/6 dark:border-slate-800/80">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+                  <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                     <ShieldAlert className="w-5 h-5" />
                   </div>
                   <div>
@@ -2230,8 +2234,8 @@ export default function SpectreSyncDashboard() {
                       >
                         Autonomous SOC Command Loop
                       </h2>
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium tracking-wide bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
-                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium tracking-wide bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                         ACTIVE DEFENSE LOOP ONLINE
                       </span>
                     </div>
@@ -2251,7 +2255,7 @@ export default function SpectreSyncDashboard() {
                     className={`p-1 rounded-xl border flex items-center gap-1 text-xs font-mono ${
                       isLight
                         ? "bg-slate-100 border-slate-300"
-                        : "bg-black/60 border-slate-800"
+                        : "bg-[#0B0F17] border-slate-800"
                     }`}
                   >
                     <button
@@ -2260,7 +2264,7 @@ export default function SpectreSyncDashboard() {
                         sentinelMode === "autonomous"
                           ? isLight
                             ? "bg-white text-slate-900 shadow-xs font-semibold"
-                            : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-semibold"
+                            : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold"
                           : isLight
                           ? "text-slate-600 hover:text-slate-900"
                           : "text-neutral-400 hover:text-neutral-200"
@@ -2290,17 +2294,17 @@ export default function SpectreSyncDashboard() {
                   <button
                     onClick={handleSimulateThreatVector}
                     disabled={isSimulating}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono font-medium bg-linear-to-r from-rose-500/20 to-cyan-500/20 hover:from-rose-500/30 hover:to-cyan-500/30 text-cyan-300 border border-cyan-500/30 shadow-xs active:scale-[0.98] transition-all duration-200 disabled:opacity-50 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono font-medium bg-rose-500/10 hover:bg-rose-500/15 text-rose-300 border border-rose-500/25 shadow-xs active:scale-[0.98] transition-all duration-200 disabled:opacity-50 cursor-pointer"
                     title="Simulate adversarial threat vector and trigger AI multi-agent reasoning pipeline"
                   >
                     {isSimulating ? (
                       <>
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-rose-400" />
                         <span>Synthesizing Vector...</span>
                       </>
                     ) : (
                       <>
-                        <Zap className="w-3.5 h-3.5 text-cyan-400" />
+                        <Zap className="w-3.5 h-3.5 text-rose-400" />
                         <span>Simulate Threat Vector</span>
                       </>
                     )}
@@ -2313,7 +2317,7 @@ export default function SpectreSyncDashboard() {
                     className={`px-3 py-2 rounded-xl text-xs font-mono font-medium transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-[0.98] ${
                       isLight
                         ? "bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300"
-                        : "bg-slate-900 hover:bg-slate-800 text-neutral-300 border border-slate-700/60"
+                        : "bg-[#0B0F17] hover:bg-slate-800 text-neutral-300 border border-slate-800"
                     }`}
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
@@ -2327,13 +2331,13 @@ export default function SpectreSyncDashboard() {
                 className={`mt-4 p-3.5 rounded-xl border flex items-start gap-3 font-mono text-xs transition-colors ${
                   isLight
                     ? "bg-slate-50 border-slate-200 text-slate-700"
-                    : "bg-black/50 border-slate-800 text-cyan-300/90"
+                    : "bg-[#0B0F17] border-slate-800 text-emerald-300/90"
                 }`}
               >
-                <Bot className="w-4 h-4 mt-0.5 shrink-0 text-cyan-400" />
+                <Bot className="w-4 h-4 mt-0.5 shrink-0 text-emerald-400" />
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold uppercase tracking-wider text-[11px] text-cyan-400">
+                    <span className="font-semibold uppercase tracking-wider text-[11px] text-emerald-400">
                       System Posture Telemetry
                     </span>
                     <span className="text-[10px] text-neutral-500">REAL-TIME INFERENCE</span>
@@ -2345,155 +2349,229 @@ export default function SpectreSyncDashboard() {
               </div>
             </div>
 
-            {/* 2. Multi-Agent Defensive Pipeline (Triage, Deception, Entanglement) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Agent 1: Triage Agent (Perception) */}
-              <div
-                className={`backdrop-blur-xl border rounded-2xl p-4 shadow-lg transition-all duration-200 ${
-                  isLight
-                    ? "bg-white/90 border-slate-200 shadow-slate-200/30"
-                    : "bg-[#090D16]/90 border-slate-800 shadow-black/20"
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
-                      <Eye className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h3
-                        className={`text-xs font-bold uppercase font-mono ${
-                          isLight ? "text-slate-900" : "text-white"
-                        }`}
-                      >
-                        Triage Agent
-                      </h3>
-                      <p className="text-[10px] font-mono text-cyan-400">Perception & Ingestion</p>
-                    </div>
+            {/* Level 1 & Level 2 Official Submission Summary Banner */}
+            <div
+              className={`border rounded-2xl p-5 shadow-xs transition-all duration-200 font-mono text-xs ${
+                isLight
+                  ? "bg-slate-50 border-cyan-200/80 text-slate-800"
+                  : "bg-[#0B132B]/80 border-cyan-500/30 text-neutral-200"
+              }`}
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-cyan-500/20">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-cyan-400" />
+                  <div>
+                    <h3 className="font-bold text-sm tracking-wide text-cyan-400 uppercase">
+                      CyberSentinel Multi-Agent Benchmark // Track 1
+                    </h3>
+                    <p className="text-[11px] text-neutral-400">
+                      Official Level 1 Evaluation (114,185 cases) & Level 2 Hidden Replay (200 cases)
+                    </p>
                   </div>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-500/10 text-cyan-400 border border-cyan-500/25">
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                    LISTENING
-                  </span>
                 </div>
-                <p
-                  className={`mt-3 text-xs leading-relaxed ${
-                    isLight ? "text-slate-600" : "text-neutral-400"
-                  }`}
-                >
-                  Ingests request headers, User-Agent fingerprints, and traffic velocity to calculate real-time Threat Scores (0–100%).
-                </p>
-                <div
-                  className={`mt-3 pt-3 border-t flex items-center justify-between text-[11px] font-mono ${
-                    isLight ? "border-slate-200 text-slate-500" : "border-slate-800 text-neutral-400"
-                  }`}
-                >
-                  <span>Vectors Evaluated</span>
-                  <span className="font-bold text-cyan-400">{alerts.length} Ingested</span>
-                </div>
-              </div>
-
-              {/* Agent 2: Deception Agent (Generative Synthesis) */}
-              <div
-                className={`backdrop-blur-xl border rounded-2xl p-4 shadow-lg transition-all duration-200 ${
-                  isLight
-                    ? "bg-white/90 border-slate-200 shadow-slate-200/30"
-                    : "bg-[#090D16]/90 border-slate-800 shadow-black/20"
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
-                      <Sparkles className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h3
-                        className={`text-xs font-bold uppercase font-mono ${
-                          isLight ? "text-slate-900" : "text-white"
-                        }`}
-                      >
-                        Deception Agent
-                      </h3>
-                      <p className="text-[10px] font-mono text-amber-400">Generative Synthesis</p>
-                    </div>
-                  </div>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/25">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                    FABRIC ARMED
-                  </span>
-                </div>
-                <p
-                  className={`mt-3 text-xs leading-relaxed ${
-                    isLight ? "text-slate-600" : "text-neutral-400"
-                  }`}
-                >
-                  Dynamically crafts realistic decoy endpoints, mock payload schemas, and embedded canary tracking tokens on demand.
-                </p>
-                <div
-                  className={`mt-3 pt-3 border-t flex items-center justify-between text-[11px] font-mono ${
-                    isLight ? "border-slate-200 text-slate-500" : "border-slate-800 text-neutral-400"
-                  }`}
-                >
-                  <span>Canary Constellation</span>
-                  <span className="font-bold text-amber-400">
-                    {decoys.length > 0 ? decoys.length : 140} Armed Traps
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                    SUBMISSION READY
                   </span>
                 </div>
               </div>
 
-              {/* Agent 3: Entanglement Agent (Action) */}
+              {/* Metrics Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                <div className="p-3 rounded-xl bg-black/20 border border-slate-800">
+                  <span className="text-[10px] text-neutral-400 uppercase">Level 1 Accuracy</span>
+                  <div className="text-base font-bold text-emerald-400 mt-0.5">0.999545</div>
+                  <span className="text-[10px] text-neutral-500">114,185 cases</span>
+                </div>
+                <div className="p-3 rounded-xl bg-black/20 border border-slate-800">
+                  <span className="text-[10px] text-neutral-400 uppercase">Macro Precision</span>
+                  <div className="text-base font-bold text-cyan-400 mt-0.5">0.999654</div>
+                  <span className="text-[10px] text-neutral-500">0 to 1</span>
+                </div>
+                <div className="p-3 rounded-xl bg-black/20 border border-slate-800">
+                  <span className="text-[10px] text-neutral-400 uppercase">Macro Recall</span>
+                  <div className="text-base font-bold text-cyan-400 mt-0.5">0.999647</div>
+                  <span className="text-[10px] text-neutral-500">0 to 1</span>
+                </div>
+                <div className="p-3 rounded-xl bg-black/20 border border-slate-800">
+                  <span className="text-[10px] text-neutral-400 uppercase">Macro-F1 (2PR/(P+R))</span>
+                  <div className="text-base font-bold text-amber-400 mt-0.5">0.999651</div>
+                  <span className="text-[10px] text-neutral-500">Exact formula match</span>
+                </div>
+              </div>
+
+              {/* Level 2 Replay Stats & Submission Files */}
+              <div className="mt-3 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-[11px]">
+                <div className="flex flex-wrap items-center gap-4 text-neutral-300">
+                  <span>Replay: <b className="text-white">200 flows</b></span>
+                  <span>Allowed: <b className="text-emerald-400">102 (51%)</b></span>
+                  <span>Blocked: <b className="text-rose-400">98 (49%)</b></span>
+                  <span>Active Policy: <b className="text-cyan-400">POL_00001 (172.16.0.1)</b></span>
+                  <span>Campaigns: <b className="text-amber-400">13 Correlated</b></span>
+                </div>
+                <div className="flex items-center gap-2 text-neutral-400">
+                  <span>Artifacts in <code className="text-cyan-300">submission/</code> & <code className="text-cyan-300">__pycache__/</code>:</span>
+                  <span className="text-white">classification.csv</span> •
+                  <span className="text-white">policies.csv</span> •
+                  <span className="text-white">replay.csv</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Multi-Agent Defensive Pipeline (5 Specialized Agents) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              {/* Agent 1: Classifier Agent (Perception) */}
               <div
-                className={`backdrop-blur-xl border rounded-2xl p-4 shadow-lg transition-all duration-200 ${
+                className={`border rounded-2xl p-3.5 shadow-xs transition-all duration-200 ${
                   isLight
-                    ? "bg-white/90 border-slate-200 shadow-slate-200/30"
-                    : "bg-[#090D16]/90 border-slate-800 shadow-black/20"
+                    ? "bg-white border-slate-200 shadow-slate-100/60"
+                    : "bg-[#111827]/95 border-slate-800 shadow-black/10"
                 }`}
               >
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400">
-                      <Hourglass className="w-4 h-4" />
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                      <Eye className="w-3.5 h-3.5" />
                     </div>
                     <div>
-                      <h3
-                        className={`text-xs font-bold uppercase font-mono ${
-                          isLight ? "text-slate-900" : "text-white"
-                        }`}
-                      >
-                        Entanglement Agent
+                      <h3 className={`text-xs font-bold uppercase font-mono ${isLight ? "text-slate-900" : "text-white"}`}>
+                        A1: Classifier
                       </h3>
-                      <p className="text-[10px] font-mono text-rose-400">Action & Tarpitting</p>
+                      <p className="text-[10px] font-mono text-emerald-400">5-Class RF</p>
                     </div>
                   </div>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-rose-500/10 text-rose-400 border border-rose-500/25">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
-                    TARPIT ACTIVE
+                  <span className="px-1.5 py-0.5 rounded-full text-[9px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    99.95%
                   </span>
                 </div>
-                <p
-                  className={`mt-3 text-xs leading-relaxed ${
-                    isLight ? "text-slate-600" : "text-neutral-400"
-                  }`}
-                >
-                  Applies network tarpitting by injecting artificial response delays and jitter (500ms to 10,000ms) to lock attacker sockets.
+                <p className={`mt-2.5 text-[11px] leading-relaxed ${isLight ? "text-slate-600" : "text-neutral-400"}`}>
+                  RandomForest classifier trained on all 78 CICIDS2017 features. Classifies BENIGN, BRUTE_FORCE, DOS, DDOS, PORT_SCAN.
                 </p>
-                <div
-                  className={`mt-3 pt-3 border-t flex items-center justify-between text-[11px] font-mono ${
-                    isLight ? "border-slate-200 text-slate-500" : "border-slate-800 text-neutral-400"
-                  }`}
-                >
-                  <span>Dynamic Delay Range</span>
-                  <span className="font-bold text-rose-400">500ms - 10,000ms</span>
+              </div>
+
+              {/* Agent 2: Anomaly Agent */}
+              <div
+                className={`border rounded-2xl p-3.5 shadow-xs transition-all duration-200 ${
+                  isLight
+                    ? "bg-white border-slate-200 shadow-slate-100/60"
+                    : "bg-[#111827]/95 border-slate-800 shadow-black/10"
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                      <Sparkles className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <h3 className={`text-xs font-bold uppercase font-mono ${isLight ? "text-slate-900" : "text-white"}`}>
+                        A2: Anomaly
+                      </h3>
+                      <p className="text-[10px] font-mono text-amber-400">Isolation Forest</p>
+                    </div>
+                  </div>
+                  <span className="px-1.5 py-0.5 rounded-full text-[9px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    ARMED
+                  </span>
                 </div>
+                <p className={`mt-2.5 text-[11px] leading-relaxed ${isLight ? "text-slate-600" : "text-neutral-400"}`}>
+                  Unsupervised outlier scoring across 78 numeric flow features. Outputs continuous anomaly score (0.0 to 1.0).
+                </p>
+              </div>
+
+              {/* Agent 3: Fusion Agent */}
+              <div
+                className={`border rounded-2xl p-3.5 shadow-xs transition-all duration-200 ${
+                  isLight
+                    ? "bg-white border-slate-200 shadow-slate-100/60"
+                    : "bg-[#111827]/95 border-slate-800 shadow-black/10"
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400">
+                      <Hourglass className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <h3 className={`text-xs font-bold uppercase font-mono ${isLight ? "text-slate-900" : "text-white"}`}>
+                        A3: Fusion
+                      </h3>
+                      <p className="text-[10px] font-mono text-rose-400">Evidence Consensus</p>
+                    </div>
+                  </div>
+                  <span className="px-1.5 py-0.5 rounded-full text-[9px] font-mono bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                    FUSED
+                  </span>
+                </div>
+                <p className={`mt-2.5 text-[11px] leading-relaxed ${isLight ? "text-slate-600" : "text-neutral-400"}`}>
+                  Synthesizes A1 & A2 telemetry. Resolves agreement vs disagreement scenarios, outputting final class and evidence status.
+                </p>
+              </div>
+
+              {/* Agent 4: Temporal Correlation Agent */}
+              <div
+                className={`border rounded-2xl p-3.5 shadow-xs transition-all duration-200 ${
+                  isLight
+                    ? "bg-white border-slate-200 shadow-slate-100/60"
+                    : "bg-[#111827]/95 border-slate-800 shadow-black/10"
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+                      <Radar className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <h3 className={`text-xs font-bold uppercase font-mono ${isLight ? "text-slate-900" : "text-white"}`}>
+                        A4: Correlation
+                      </h3>
+                      <p className="text-[10px] font-mono text-cyan-400">Sliding Window</p>
+                    </div>
+                  </div>
+                  <span className="px-1.5 py-0.5 rounded-full text-[9px] font-mono bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                    13 CAMPAIGNS
+                  </span>
+                </div>
+                <p className={`mt-2.5 text-[11px] leading-relaxed ${isLight ? "text-slate-600" : "text-neutral-400"}`}>
+                  Groups recurring attack flows across endpoints and port sweeps into correlated campaigns with pattern classification.
+                </p>
+              </div>
+
+              {/* Agent 5: Adaptive Defense Agent */}
+              <div
+                className={`border rounded-2xl p-3.5 shadow-xs transition-all duration-200 ${
+                  isLight
+                    ? "bg-white border-slate-200 shadow-slate-100/60"
+                    : "bg-[#111827]/95 border-slate-800 shadow-black/10"
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400">
+                      <Shield className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <h3 className={`text-xs font-bold uppercase font-mono ${isLight ? "text-slate-900" : "text-white"}`}>
+                        A5: Defense
+                      </h3>
+                      <p className="text-[10px] font-mono text-purple-400">Policy & Replay</p>
+                    </div>
+                  </div>
+                  <span className="px-1.5 py-0.5 rounded-full text-[9px] font-mono bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                    49% BLOCKED
+                  </span>
+                </div>
+                <p className={`mt-2.5 text-[11px] leading-relaxed ${isLight ? "text-slate-600" : "text-neutral-400"}`}>
+                  Enforces pre-inspection block policies before analysis. Activated POL_00001 to contain 98 malicious flows.
+                </p>
               </div>
             </div>
 
             {/* 3. Real-Time SOC Threat Feed Table */}
             <div
-              className={`backdrop-blur-xl border rounded-2xl overflow-hidden shadow-xl transition-all duration-200 ${
+              className={`border rounded-2xl overflow-hidden shadow-xs transition-all duration-200 ${
                 isLight
-                  ? "bg-white/90 border-slate-200/90 shadow-slate-200/40"
-                  : "bg-[#090D16]/90 border-slate-800 shadow-black/20"
+                  ? "bg-white border-slate-200 shadow-slate-100/60"
+                  : "bg-[#111827]/95 border-slate-800 shadow-black/10"
               }`}
             >
               {alerts.length === 0 ? (
@@ -2517,7 +2595,7 @@ export default function SpectreSyncDashboard() {
                         className={`border-b font-medium font-mono ${
                           isLight
                             ? "bg-slate-100/70 border-slate-200 text-slate-600"
-                            : "bg-black/40 border-slate-800 text-neutral-400"
+                            : "bg-[#0B0F17] border-slate-800 text-neutral-400"
                         }`}
                       >
                         <th className="py-3 px-4 w-36">Timestamp (IST)</th>
@@ -2587,7 +2665,7 @@ export default function SpectreSyncDashboard() {
                               <div className="flex items-center gap-2 min-w-0">
                                 <span
                                   className={`font-bold text-xs truncate ${
-                                    isLight ? "text-amber-700" : "text-cyan-400"
+                                    isLight ? "text-amber-700" : "text-emerald-400"
                                   }`}
                                   title={targetAsset}
                                 >
@@ -2605,7 +2683,7 @@ export default function SpectreSyncDashboard() {
                                       ? "text-rose-400"
                                       : threatScore >= 60
                                       ? "text-amber-400"
-                                      : "text-cyan-400"
+                                      : "text-emerald-400"
                                   }`}
                                 >
                                   {threatScore}%
@@ -2617,7 +2695,7 @@ export default function SpectreSyncDashboard() {
                                         ? "bg-rose-500"
                                         : threatScore >= 60
                                         ? "bg-amber-500"
-                                        : "bg-cyan-400"
+                                        : "bg-emerald-400"
                                     }`}
                                     style={{ width: `${threatScore}%` }}
                                   />
@@ -2638,8 +2716,8 @@ export default function SpectreSyncDashboard() {
                                   CANARY_TRIGGERED
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/25">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 mr-1.5 shrink-0" />
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 shrink-0" />
                                   MONITORING
                                 </span>
                               )}
@@ -2648,12 +2726,12 @@ export default function SpectreSyncDashboard() {
                             {/* Playbook / Operator Action */}
                             <td className="py-3.5 px-4 text-right whitespace-nowrap">
                               {sentinelMode === "autonomous" ? (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                   <ShieldCheck className="w-3.5 h-3.5" />
                                   <span>Auto-Mitigated</span>
                                 </span>
                               ) : alert.supervised_approved ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/25">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                   <Check className="w-3 h-3" />
                                   <span>{alert.status || "Operator Approved"}</span>
                                 </span>
@@ -2698,10 +2776,10 @@ export default function SpectreSyncDashboard() {
       {/* Dynamic Translucent Bottom Dockbar */}
       <nav
         aria-label="Main Navigation Dock"
-        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 backdrop-blur-md rounded-full border shadow-2xl px-4 py-2 flex items-center gap-1.5 sm:gap-2 transition-all duration-300 ${
+        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 backdrop-blur-sm rounded-full border shadow-xl px-4 py-2 flex items-center gap-1.5 sm:gap-2 transition-all duration-200 ${
           isLight
-            ? "bg-white/85 border-slate-300/80 shadow-slate-300/60"
-            : "bg-slate-900/70 border-slate-700/50 shadow-black/80"
+            ? "bg-white/95 border-slate-300/80 shadow-slate-200/60"
+            : "bg-[#111827]/95 border-slate-800 shadow-black/80"
         }`}
       >
         <button
@@ -2710,13 +2788,13 @@ export default function SpectreSyncDashboard() {
             activeTab === "deploy"
               ? isLight
                 ? "bg-amber-500/15 text-amber-800 border border-amber-500/35 font-semibold shadow-xs"
-                : "bg-slate-800/90 text-white shadow-md border border-white/15"
+                : "bg-slate-800 text-white shadow-xs border border-slate-700 font-semibold"
               : isLight
               ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
               : "text-neutral-400 hover:text-white hover:bg-white/5"
           }`}
         >
-          <Zap className={`w-3.5 h-3.5 ${isLight ? "text-amber-600" : "text-cyan-400"}`} />
+          <Zap className={`w-3.5 h-3.5 ${isLight ? "text-amber-600" : "text-emerald-400"}`} />
           <span>Mesh Deployment</span>
         </button>
 
@@ -2726,13 +2804,13 @@ export default function SpectreSyncDashboard() {
             activeTab === "topology"
               ? isLight
                 ? "bg-amber-500/15 text-amber-800 border border-amber-500/35 font-semibold shadow-xs"
-                : "bg-slate-800/90 text-white shadow-md border border-white/15"
+                : "bg-slate-800 text-white shadow-xs border border-slate-700 font-semibold"
               : isLight
               ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
               : "text-neutral-400 hover:text-white hover:bg-white/5"
           }`}
         >
-          <Radar className={`w-3.5 h-3.5 ${isLight ? "text-amber-600" : "text-cyan-400"}`} />
+          <Radar className={`w-3.5 h-3.5 ${isLight ? "text-amber-600" : "text-emerald-400"}`} />
           <span>Ghost Topology</span>
         </button>
 
@@ -2742,7 +2820,7 @@ export default function SpectreSyncDashboard() {
             activeTab === "soc"
               ? isLight
                 ? "bg-amber-500/15 text-amber-800 border border-amber-500/35 font-semibold shadow-xs"
-                : "bg-slate-800/90 text-white shadow-md border border-white/15"
+                : "bg-slate-800 text-white shadow-xs border border-slate-700 font-semibold"
               : isLight
               ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
               : "text-neutral-400 hover:text-white hover:bg-white/5"
@@ -2765,29 +2843,17 @@ export default function SpectreSyncDashboard() {
             isAIAgentOpen
               ? isLight
                 ? "bg-amber-500/20 text-amber-800 border border-amber-500/40 font-semibold shadow-xs"
-                : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-semibold shadow-md"
+                : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold shadow-xs"
               : isLight
               ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
               : "text-neutral-400 hover:text-white hover:bg-white/5"
           }`}
           title="Toggle Spectre AI (Ctrl+K)"
         >
-          <Bot className={`w-3.5 h-3.5 ${isAIAgentOpen ? "text-cyan-400 animate-pulse" : isLight ? "text-amber-600" : "text-cyan-400"}`} />
+          <Bot className={`w-3.5 h-3.5 ${isAIAgentOpen ? "text-emerald-400 animate-pulse" : isLight ? "text-amber-600" : "text-emerald-400"}`} />
           <span>Spectre AI</span>
         </button>
       </nav>
-
-      {/* Sleek Minimalist Bottom-Right Status Floater */}
-      <div
-        className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-3.5 py-2 rounded-full backdrop-blur-md border shadow-2xl transition-all duration-200 text-xs font-mono select-none ${
-          isLight
-            ? "bg-white/85 border-slate-300/80 text-slate-800 shadow-slate-300/60"
-            : "bg-slate-900/80 border-slate-700/60 text-slate-200 shadow-black/70"
-        }`}
-      >
-        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-        <span className="font-semibold tracking-tight font-sans">Mesh Active</span>
-      </div>
 
       {/* Autonomous In-Website Spectre AI Drawer */}
       <SpectreAIAgent

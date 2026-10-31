@@ -215,6 +215,8 @@ export default function SpectreAIAgent({
     }
     // 4.8. CyberSentinel Multi-Agent Evaluation & Benchmark Report
     else if (
+      lower.includes("stat") ||
+      lower.includes("summary") ||
       lower.includes("evaluate") ||
       lower.includes("benchmark") ||
       lower.includes("pipeline") ||
@@ -222,53 +224,52 @@ export default function SpectreAIAgent({
       lower.includes("accuracy") ||
       lower.includes("f1") ||
       lower.includes("retry") ||
+      lower.includes("level 1") ||
+      lower.includes("level 2") ||
+      lower.startsWith("/stat") ||
+      lower.startsWith("/day2") ||
+      lower.startsWith("/5agents") ||
       lower.startsWith("/evaluate") ||
       lower.startsWith("/benchmark") ||
       lower.startsWith("/pipeline")
     ) {
-      thoughtText = "Synthesizing CyberSentinel multi-agent validation benchmark results from /results/day1_level1_submission.json across Agent 1 (Threat Classifier), Agent 2 (Anomaly Detector), and Agent 3 (Evidence Fusion).";
+      thoughtText = "Compiling official CyberSentinel Track 1 benchmark metrics for Level 1 submission (114,185 cases) and Level 2 hidden test replay (200 cases).";
       toolCallData = {
         tool: "fetch_pipeline_evaluation",
         args: {
-          script: "src/evaluate_pipeline.py",
-          dataset: "data/cleaned_cicids2017.csv",
-          records: 500,
+          level1_cases: 114185,
+          level2_cases: 200,
         },
       };
 
       appendAgentThought(
         "BENCHMARK_EVALUATION",
-        "Multi-agent validation complete across 500 holdout records. Fused Accuracy: 99.80%, Macro-F1: 0.9973. Consensus rate: 59.8%.",
-        "Submission artifact generated in results/day1_level1_submission.json."
+        "Official submission metrics compiled. Level 1 Accuracy: 0.999545, Macro-F1: 0.999651. Level 2 Replay: 102 Allowed / 98 Blocked via POL_00001.",
+        "Submission CSVs ready in submission/ and __pycache__/."
       );
 
-      replyText = `CYBERSENTINEL MULTI-AGENT PIPELINE BENCHMARK (DAY 1 // LEVEL 1)
-Evaluated on 500 Stratified Holdout Records (CICIDS2017):
+      replyText = `CYBERSENTINEL OFFICIAL SUBMISSION METRICS (TRACK 1)
 
-CORE VALIDATION PERFORMANCE:
-- Overall Fused Accuracy : 99.80%
-- Overall Macro-F1 Score : 0.9973
-- Standalone Agent 1 Acc : 99.80% (Macro-F1: 0.9973)
-- Multi-Agent Consensus  : 59.8% (299/500 agreed)
-- Disagreements Handled  : 201 records (198 signature overrides, 3 probationary)
+SUBMIT LEVEL 1 SUMMARY (Official Count: 1,14,185):
+- TOTAL CASES     : 114185
+- ACCURACY        : 0.999545  (99.95%)
+- MACRO PRECISION : 0.999654
+- MACRO RECALL    : 0.999647
+- MACRO-F1        : 0.999651  (Matches 2PR / (P + R))
 
-BENCHMARK CLASS METRICS:
-- BENIGN      : Precision 100.0% | Recall 100.0% | F1 1.0000 (223 flows)
-- BRUTE_FORCE : Precision 100.0% | Recall 100.0% | F1 1.0000 (60 flows)
-- DOS         : Precision 100.0% | Recall 98.72% | F1 0.9935 (78 flows)
-- DDOS        : Precision  98.65% | Recall 100.0% | F1 0.9932 (73 flows)
-- PORT_SCAN   : Precision 100.0% | Recall 100.0% | F1 1.0000 (66 flows)
+LEVEL 2 HIDDEN TEST REPLAY BENCHMARK (Official Hidden Set: 200 cases):
+- TOTAL FLOWS REPLAYED : 200 flows (F000001 - F000200)
+- FLOWS ALLOWED        : 102 flows (51.0%)
+- FLOWS BLOCKED        :  98 flows (49.0% contained by adaptive defense)
+- ACTIVE POLICY        : POL_00001 on Attacker 172.16.0.1 (F000018 to F000200)
+- CORRELATED CAMPAIGNS : 13 attack groups detected by Agent 4
 
-AGENT 3 EVIDENCE FUSION BREAKDOWN:
-- BENIGN_VERIFIED          : 221 flows (44.2%) -> Policy: ALLOW
-- TARGETED_SIGNATURE_MATCH : 198 flows (39.6%) -> Policy: BLOCK
-- CONFIRMED_THREAT         :  78 flows (15.6%) -> Policy: TARPIT / QUARANTINE
-- SUSPICIOUS_MONITOR       :   2 flows ( 0.4%) -> Policy: ALLOW_INSPECT
-- PROBATIONARY_CONTAINMENT :   1 flow  ( 0.2%) -> Policy: TARPIT
+OFFICIAL SUBMISSION CSV FILES GENERATED:
+1. classification.csv (200 records: record_id, predicted_class, anomaly_score, evidence_status)
+2. policies.csv / policy.csv (1 active policy: policy_id, activated_after_record_id, scope_type, scope_value, expires_after_record_id)
+3. replay.csv (200 records: record_id, action, active_policy_id)
 
-Exported Submission Artifact:
-- Target File: results/day1_level1_submission.json
-- Status: Ready for Level 1 WhatsApp API submission prior to 8:00 PM deadline.`;
+Files are ready in both ./submission/ and ./__pycache__/ for upload.`;
     }
     // 5. Isolate or Tarpit Specific Attackers
     else if (lower.includes("isolate") || lower.includes("quarantine")) {
@@ -441,7 +442,7 @@ To execute an action, try:
               showThinking
                 ? isLight
                   ? "bg-slate-200 text-slate-800 border-slate-300"
-                  : "bg-slate-800 text-cyan-300 border-slate-700"
+                  : "bg-slate-800 text-emerald-300 border-slate-700"
                 : isLight
                 ? "text-slate-500 border-transparent hover:bg-slate-100"
                 : "text-neutral-400 border-transparent hover:bg-white/5"
@@ -490,7 +491,7 @@ To execute an action, try:
       {/* Quick Action Suggestion Chips */}
       <div
         className={`px-4 py-2 border-b flex items-center gap-1.5 overflow-x-auto text-[11px] font-mono no-scrollbar ${
-          isLight ? "border-slate-200 bg-white" : "border-slate-800/80 bg-black/20"
+          isLight ? "border-slate-200 bg-white" : "border-slate-800 bg-[#0B0F17]/80"
         }`}
       >
         <button
@@ -498,7 +499,7 @@ To execute an action, try:
           className={`shrink-0 px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
             isLight
               ? "bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700"
-              : "bg-slate-900/80 hover:bg-slate-800 border-slate-700/80 text-cyan-300"
+              : "bg-slate-900/80 hover:bg-slate-800 border-slate-700 text-emerald-300"
           }`}
         >
           Deploy Mesh
@@ -508,7 +509,7 @@ To execute an action, try:
           className={`shrink-0 px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
             isLight
               ? "bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700"
-              : "bg-slate-900/80 hover:bg-slate-800 border-slate-700/80 text-cyan-300"
+              : "bg-slate-900/80 hover:bg-slate-800 border-slate-700 text-emerald-300"
           }`}
         >
           Simulate Attack
@@ -518,7 +519,7 @@ To execute an action, try:
           className={`shrink-0 px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
             isLight
               ? "bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700"
-              : "bg-slate-900/80 hover:bg-slate-800 border-slate-700/80 text-cyan-300"
+              : "bg-slate-900/80 hover:bg-slate-800 border-slate-700 text-emerald-300"
           }`}
         >
           Posture Report
@@ -528,7 +529,7 @@ To execute an action, try:
           className={`shrink-0 px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
             isLight
               ? "bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700"
-              : "bg-slate-900/80 hover:bg-slate-800 border-slate-700/80 text-cyan-300"
+              : "bg-slate-900/80 hover:bg-slate-800 border-slate-700 text-emerald-300"
           }`}
         >
           View Topology
@@ -538,7 +539,7 @@ To execute an action, try:
           className={`shrink-0 px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
             isLight
               ? "bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700"
-              : "bg-slate-900/80 hover:bg-slate-800 border-slate-700/80 text-cyan-300"
+              : "bg-slate-900/80 hover:bg-slate-800 border-slate-700 text-emerald-300"
           }`}
         >
           Help Menu
@@ -552,7 +553,7 @@ To execute an action, try:
             {msg.sender === "user" ? (
               <div className="flex justify-end">
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 border shadow-sm ${
+                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 border shadow-xs ${
                     isLight
                       ? "bg-slate-100 border-slate-300 text-slate-900"
                       : "bg-slate-800/90 border-slate-700 text-white"
@@ -569,10 +570,10 @@ To execute an action, try:
             ) : (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-md bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center shrink-0">
+                  <div className="w-5 h-5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
                     <Bot className="w-3 h-3" />
                   </div>
-                  <span className="text-[11px] font-bold text-cyan-400">
+                  <span className="text-[11px] font-bold text-emerald-400">
                     SPECTRE AI
                   </span>
                   <span className="text-[10px] text-neutral-500">{msg.timestamp}</span>
@@ -584,10 +585,10 @@ To execute an action, try:
                     className={`rounded-xl border p-2.5 text-[11px] leading-relaxed transition-all ${
                       isLight
                         ? "bg-slate-50 border-slate-200 text-slate-600"
-                        : "bg-black/50 border-slate-800 text-neutral-400"
+                        : "bg-[#0B0F17] border-slate-800 text-neutral-400"
                     }`}
                   >
-                    <div className="flex items-center gap-1.5 text-cyan-400 font-semibold mb-1 text-[10px] uppercase tracking-wide">
+                    <div className="flex items-center gap-1.5 text-emerald-400 font-semibold mb-1 text-[10px] uppercase tracking-wide">
                       <Cpu className="w-3 h-3" />
                       <span>Internal Reasoning</span>
                     </div>
@@ -601,7 +602,7 @@ To execute an action, try:
                     className={`rounded-xl border p-2.5 text-[11px] ${
                       isLight
                         ? "bg-amber-500/5 border-amber-500/20 text-amber-900"
-                        : "bg-cyan-950/20 border-cyan-500/30 text-cyan-300"
+                        : "bg-emerald-950/20 border-emerald-500/20 text-emerald-300"
                     }`}
                   >
                     <div className="flex items-center justify-between font-semibold text-[10px] uppercase tracking-wider mb-1">
@@ -619,10 +620,10 @@ To execute an action, try:
 
                 {/* Final Agent Response Content */}
                 <div
-                  className={`rounded-2xl p-3.5 border shadow-sm leading-relaxed ${
+                  className={`rounded-2xl p-3.5 border shadow-xs leading-relaxed ${
                     isLight
                       ? "bg-white border-slate-200 text-slate-800"
-                      : "bg-slate-900/60 border-slate-800 text-neutral-200"
+                      : "bg-[#111827] border-slate-800 text-neutral-200"
                   }`}
                 >
                   <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -633,7 +634,7 @@ To execute an action, try:
         ))}
 
         {isProcessing && (
-          <div className="flex items-center gap-2 p-3 rounded-xl border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 text-xs font-mono">
+          <div className="flex items-center gap-2 p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-emerald-400 text-xs font-mono">
             <RefreshCw className="w-3.5 h-3.5 animate-spin" />
             <span>Agent synthesizing response and evaluating tool dispatch...</span>
           </div>
@@ -644,17 +645,17 @@ To execute an action, try:
       {/* Command Prompt Input Bar */}
       <div
         className={`p-4 border-t ${
-          isLight ? "border-slate-200 bg-slate-50/90" : "border-slate-800/80 bg-black/60"
+          isLight ? "border-slate-200 bg-slate-50/90" : "border-slate-800 bg-[#0B0F17]"
         }`}
       >
         <div
           className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${
             isLight
-              ? "bg-white border-slate-300 focus-within:border-cyan-500"
-              : "bg-slate-950 border-slate-800 focus-within:border-cyan-500"
+              ? "bg-white border-slate-300 focus-within:border-emerald-500"
+              : "bg-[#0B0F17] border-slate-800 focus-within:border-emerald-500"
           }`}
         >
-          <Terminal className="w-4 h-4 text-cyan-400 shrink-0" />
+          <Terminal className="w-4 h-4 text-emerald-400 shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -670,7 +671,7 @@ To execute an action, try:
           <button
             onClick={() => processCommand(inputVal)}
             disabled={!inputVal.trim() || isProcessing}
-            className="p-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30 transition-all disabled:opacity-40 cursor-pointer active:scale-95"
+            className="p-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 transition-all disabled:opacity-40 cursor-pointer active:scale-95"
             title="Execute Command"
           >
             <CornerDownLeft className="w-3.5 h-3.5" />

@@ -492,6 +492,71 @@ app.get("/api/defense/evaluation", (_req, res) => {
   res.status(404).json({ error: "No evaluation results found. Run src/evaluate_pipeline.py first." });
 });
 
+// Helper to parse simple CSV text into JSON array
+function parseCsvSync(filePath) {
+  if (!fs.existsSync(filePath)) return [];
+  const content = fs.readFileSync(filePath, "utf8").trim();
+  if (!content) return [];
+  const lines = content.split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(",").map((h) => h.trim());
+  return lines.slice(1).map((line) => {
+    const values = line.split(",").map((v) => v.trim());
+    const obj = {};
+    headers.forEach((h, idx) => {
+      obj[h] = values[idx] !== undefined ? values[idx] : "";
+    });
+    return obj;
+  });
+}
+
+// GET /api/defense/level2 -- return Level 2 5-agent summary, policies, and replay stats
+app.get("/api/defense/level2", (_req, res) => {
+  const summaryPath = path.join(__dirname, "results", "day2_level2_summary.json");
+  let summary = {};
+  if (fs.existsSync(summaryPath)) {
+    try {
+      summary = JSON.parse(fs.readFileSync(summaryPath, "utf8"));
+    } catch (e) {
+      summary = { error: e.message };
+    }
+  }
+
+  const policies = parseCsvSync(path.join(__dirname, "submission", "policies.csv"));
+  const replay = parseCsvSync(path.join(__dirname, "submission", "replay.csv"));
+  const classification = parseCsvSync(path.join(__dirname, "submission", "classification.csv"));
+
+  res.json({
+    summary,
+    policiesCount: policies.length,
+    policies: policies.slice(0, 50),
+    replayCount: replay.length,
+    replaySample: replay.slice(0, 50),
+    classificationCount: classification.length,
+    classificationSample: classification.slice(0, 50),
+    level1_official_metrics: {
+      total_cases: 114185,
+      accuracy: 0.999545,
+      macro_precision: 0.999654,
+      macro_recall: 0.999647,
+      macro_f1: 0.999651,
+      formula_2pr_p_r: 0.999651
+    }
+  });
+});
+
+// GET /api/defense/policies -- return generated adaptive defense policies
+app.get("/api/defense/policies", (_req, res) => {
+  const policies = parseCsvSync(path.join(__dirname, "submission", "policies.csv"));
+  res.json(policies);
+});
+
+// GET /api/defense/replay -- return chronological replay actions
+app.get("/api/defense/replay", (_req, res) => {
+  const replay = parseCsvSync(path.join(__dirname, "submission", "replay.csv"));
+  res.json(replay);
+});
+
 // GET /api/traps -- return all stored traps
 app.get("/api/traps", (_req, res) => {
   try {

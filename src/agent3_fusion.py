@@ -100,38 +100,32 @@ class EvidenceFusionAgent:
             )
 
         # ---------------------------------------------------------------------
-        # Case 3: Disagreement - A1 says Benign, but A2 detects High Anomaly
-        # Potential stealth probe, novel attack, or evasion attempt
+        # Case 3: Disagreement - A1 says Benign, but A2 detects Anomaly
+        # Potential stealth probe, novel attack, or bursty nominal transfer
         # ---------------------------------------------------------------------
         elif not is_a1_attack and is_a2_anomalous:
             agreement = False
-            if a2_score >= self.escalation_threshold:
-                # High anomaly override: inspect runner-up attack class in A1 probabilities
-                attack_candidates = {k: v for k, v in a1_probs.items() if k != "BENIGN"}
-                best_attack = max(attack_candidates.items(), key=lambda x: x[1])[0] if attack_candidates else "PORT_SCAN"
-                
-                # If runner-up probability is non-negligible, escalate to that class
-                if attack_candidates and attack_candidates[best_attack] >= 0.15:
-                    final_class = best_attack
-                else:
-                    # Default heuristic mapping based on feature evidence
-                    syn_present = any("SYN" in str(e.get("feature", "")) for e in a2_evidence)
-                    final_class = "PORT_SCAN" if syn_present else "DOS"
+            attack_candidates = {k: v for k, v in a1_probs.items() if k != "BENIGN"}
+            best_attack = max(attack_candidates.items(), key=lambda x: x[1])[0] if attack_candidates else "PORT_SCAN"
+            best_attack_prob = attack_candidates.get(best_attack, 0.0)
 
+            # Only escalate class label if Agent 1 has low confidence in BENIGN AND significant attack runner-up probability
+            if a2_score >= self.escalation_threshold and a1_conf < 0.70 and best_attack_prob >= 0.25:
+                final_class = best_attack
                 evidence_status = "DISAGREEMENT_ANOMALY_ESCALATION"
                 policy = "TARPIT"
                 rationale = (
-                    f"Disagreement Escalation: Agent 1 predicted BENIGN ({a1_conf*100:.1f}%), but Agent 2 flagged severe "
-                    f"statistical anomaly (score: {a2_score:.2f}) in {feat_str}. Escalated to {final_class} under active containment."
+                    f"Disagreement Escalation: Agent 1 had low BENIGN confidence ({a1_conf*100:.1f}%), and Agent 2 flagged severe "
+                    f"statistical anomaly (score: {a2_score:.2f}) in {feat_str}. Escalated to {final_class} with runner-up prob {best_attack_prob*100:.1f}%."
                 )
             else:
-                # Moderate anomaly - retain Benign but flag for inspection
+                # Retain BENIGN classification to preserve high precision, while logging suspicious anomaly evidence
                 final_class = "BENIGN"
-                evidence_status = "SUSPICIOUS_MONITOR"
+                evidence_status = "DISAGREEMENT_ANOMALY_ESCALATION" if a2_score >= self.escalation_threshold else "SUSPICIOUS_MONITOR"
                 policy = "ALLOW_INSPECT"
                 rationale = (
-                    f"Disagreement Warning: Agent 1 classified BENIGN ({a1_conf*100:.1f}%), but Agent 2 observed mild anomaly "
-                    f"score ({a2_score:.2f}). Allowed under heightened session telemetry."
+                    f"Disagreement Monitored: Agent 1 classified BENIGN ({a1_conf*100:.1f}%), but Agent 2 observed statistical anomaly "
+                    f"(score: {a2_score:.2f}) driven by {feat_str}. Preserved BENIGN with active session monitoring."
                 )
 
         # ---------------------------------------------------------------------

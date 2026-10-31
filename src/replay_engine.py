@@ -248,29 +248,37 @@ def run_cyber_sentinel_replay(
         df_classification.to_csv(os.path.join(RESULTS_DIR, "classification.csv"), index=False)
     print(f"  [+] classification.csv saved ({len(df_classification)} rows) -> {class_out_path}")
 
-    # 2. policy.csv
+    # 2. policies.csv (and policy.csv)
+    # Schema matches official template: policy_id,activated_after_record_id,scope_type,scope_value,expires_after_record_id
     policy_rows = agent5.get_policy_dataframe_records()
     df_policy = pd.DataFrame(policy_rows)
+    official_policy_cols = [
+        "policy_id", "activated_after_record_id", "scope_type", "scope_value", "expires_after_record_id"
+    ]
     if df_policy.empty:
-        df_policy = pd.DataFrame(columns=[
-            "policy_id", "activated_after_record_id", "scope_type", "scope_value",
-            "expires_after_record_id", "policy_action"
-        ])
+        df_policy = pd.DataFrame(columns=official_policy_cols)
     else:
-        df_policy = df_policy[[
-            "policy_id", "activated_after_record_id", "scope_type", "scope_value",
-            "expires_after_record_id", "policy_action"
-        ]]
-    policy_out_path = os.path.join(output_dir, "policy.csv")
-    df_policy.to_csv(policy_out_path, index=False)
-    if export_to_results:
-        df_policy.to_csv(os.path.join(RESULTS_DIR, "policy.csv"), index=False)
-    print(f"  [+] policy.csv saved ({len(df_policy)} rows) -> {policy_out_path}")
+        df_policy = df_policy[[c for c in official_policy_cols if c in df_policy.columns]]
+    
+    # Save as policies.csv and policy.csv
+    policy_out_path = os.path.join(output_dir, "policies.csv")
+    for p_name in ["policies.csv", "policy.csv"]:
+        p_path = os.path.join(output_dir, p_name)
+        df_policy.to_csv(p_path, index=False)
+        if export_to_results:
+            df_policy.to_csv(os.path.join(RESULTS_DIR, p_name), index=False)
+    print(f"  [+] policies.csv / policy.csv saved ({len(df_policy)} rows) -> {policy_out_path}")
 
     # 3. replay.csv
+    # Schema matches official template: record_id,action,active_policy_id
     replay_rows = agent5.get_replay_dataframe_records()
     df_replay = pd.DataFrame(replay_rows)
-    df_replay = df_replay[["record_id", "action", "applied_policy_id"]]
+    if "applied_policy_id" in df_replay.columns and "active_policy_id" not in df_replay.columns:
+        df_replay = df_replay.rename(columns={"applied_policy_id": "active_policy_id"})
+    
+    # Ensure active_policy_id is empty string for ALLOW
+    df_replay["active_policy_id"] = df_replay["active_policy_id"].fillna("").astype(str).replace({"nan": "", "None": ""})
+    df_replay = df_replay[["record_id", "action", "active_policy_id"]]
     replay_out_path = os.path.join(output_dir, "replay.csv")
     df_replay.to_csv(replay_out_path, index=False)
     if export_to_results:

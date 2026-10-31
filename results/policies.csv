@@ -1,0 +1,2 @@
+policy_id,activated_after_record_id,scope_type,scope_value,expires_after_record_id
+POL_00001,F000018,SOURCE_IP,172.16.0.1,F000200

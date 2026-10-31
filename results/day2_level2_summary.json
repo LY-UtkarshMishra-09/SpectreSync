@@ -3,24 +3,24 @@
   "track": "TRACK 1: Agentic AI for CYBERSECURITY",
   "system": "CyberSentinel: 5-Agent Network Intrusion Detection & Adaptive Defense",
   "day": "Day 2 (Level 2 Final Submission)",
-  "timestamp": "2026-10-31T06:03:19Z",
+  "timestamp": "2026-10-31T06:18:32Z",
   "dataset_evaluated": "__pycache__/cyber-hidden/Cyber/hidden/records.csv",
   "total_records_processed": 200,
-  "elapsed_time_seconds": 3.42,
+  "elapsed_time_seconds": 3.49,
   "agent5_replay_defense_stats": {
-    "total_allowed": 80,
-    "total_blocked": 120,
-    "block_rate_percent": 60.0,
-    "policies_created": 7,
+    "total_allowed": 102,
+    "total_blocked": 98,
+    "block_rate_percent": 49.0,
+    "policies_created": 1,
     "policies_expired": 0
   },
   "agent4_correlation_stats": {
     "total_attack_groups": 13,
-    "correlated_flows_count": 65
+    "correlated_flows_count": 87
   },
   "files_generated": {
     "classification_csv": "submission\\classification.csv",
-    "policy_csv": "submission\\policy.csv",
+    "policy_csv": "submission\\policies.csv",
     "replay_csv": "submission\\replay.csv"
   }
 }
