@@ -66,7 +66,7 @@ class AnomalyDetectionAgent:
             raise FileNotFoundError(f"Dataset not found at {data_path}")
 
         print(f"[Agent 2] Fitting baseline statistical distribution on {data_path}...")
-        df = pd.read_csv(data_path)
+        df = pd.read_parquet(data_path) if str(data_path).endswith(".parquet") else pd.read_csv(data_path)
         
         # Clean column names
         df.columns = [c.strip() for c in df.columns]

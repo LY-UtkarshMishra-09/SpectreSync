@@ -3,7 +3,7 @@
   "track": "TRACK 1: Agentic AI for CYBERSECURITY",
   "project": "CyberSentinel: Multi-Agent Network Intrusion Detection & Adaptive Defense",
   "day": "Day 1 (Level 1)",
-  "timestamp": "2026-10-30T13:41:58Z",
+  "timestamp": "2026-10-30T14:08:30Z",
   "validation_summary": {
     "total_validation_records": 500,
     "overall_accuracy": 0.998,
@@ -11,7 +11,7 @@
     "standalone_agent1_accuracy": 0.998,
     "standalone_agent1_macro_f1": 0.9973,
     "consensus_agreement_rate": 0.598,
-    "evaluation_time_seconds": 9.57
+    "evaluation_time_seconds": 8.31
   },
   "per_class_metrics": {
     "BENIGN": {

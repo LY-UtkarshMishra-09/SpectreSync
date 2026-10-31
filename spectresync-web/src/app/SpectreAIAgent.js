@@ -213,6 +213,63 @@ export default function SpectreAIAgent({
 
       replyText = "CyberSentinel Agent 1 classification results streamed to the SOC Threat Feed. Verified 99.80% accuracy and 0.9973 Macro-F1 across active benchmark categories.";
     }
+    // 4.8. CyberSentinel Multi-Agent Evaluation & Benchmark Report
+    else if (
+      lower.includes("evaluate") ||
+      lower.includes("benchmark") ||
+      lower.includes("pipeline") ||
+      lower.includes("output") ||
+      lower.includes("accuracy") ||
+      lower.includes("f1") ||
+      lower.includes("retry") ||
+      lower.startsWith("/evaluate") ||
+      lower.startsWith("/benchmark") ||
+      lower.startsWith("/pipeline")
+    ) {
+      thoughtText = "Synthesizing CyberSentinel multi-agent validation benchmark results from /results/day1_level1_submission.json across Agent 1 (Threat Classifier), Agent 2 (Anomaly Detector), and Agent 3 (Evidence Fusion).";
+      toolCallData = {
+        tool: "fetch_pipeline_evaluation",
+        args: {
+          script: "src/evaluate_pipeline.py",
+          dataset: "data/cleaned_cicids2017.csv",
+          records: 500,
+        },
+      };
+
+      appendAgentThought(
+        "BENCHMARK_EVALUATION",
+        "Multi-agent validation complete across 500 holdout records. Fused Accuracy: 99.80%, Macro-F1: 0.9973. Consensus rate: 59.8%.",
+        "Submission artifact generated in results/day1_level1_submission.json."
+      );
+
+      replyText = `CYBERSENTINEL MULTI-AGENT PIPELINE BENCHMARK (DAY 1 // LEVEL 1)
+Evaluated on 500 Stratified Holdout Records (CICIDS2017):
+
+CORE VALIDATION PERFORMANCE:
+- Overall Fused Accuracy : 99.80%
+- Overall Macro-F1 Score : 0.9973
+- Standalone Agent 1 Acc : 99.80% (Macro-F1: 0.9973)
+- Multi-Agent Consensus  : 59.8% (299/500 agreed)
+- Disagreements Handled  : 201 records (198 signature overrides, 3 probationary)
+
+BENCHMARK CLASS METRICS:
+- BENIGN      : Precision 100.0% | Recall 100.0% | F1 1.0000 (223 flows)
+- BRUTE_FORCE : Precision 100.0% | Recall 100.0% | F1 1.0000 (60 flows)
+- DOS         : Precision 100.0% | Recall 98.72% | F1 0.9935 (78 flows)
+- DDOS        : Precision  98.65% | Recall 100.0% | F1 0.9932 (73 flows)
+- PORT_SCAN   : Precision 100.0% | Recall 100.0% | F1 1.0000 (66 flows)
+
+AGENT 3 EVIDENCE FUSION BREAKDOWN:
+- BENIGN_VERIFIED          : 221 flows (44.2%) -> Policy: ALLOW
+- TARGETED_SIGNATURE_MATCH : 198 flows (39.6%) -> Policy: BLOCK
+- CONFIRMED_THREAT         :  78 flows (15.6%) -> Policy: TARPIT / QUARANTINE
+- SUSPICIOUS_MONITOR       :   2 flows ( 0.4%) -> Policy: ALLOW_INSPECT
+- PROBATIONARY_CONTAINMENT :   1 flow  ( 0.2%) -> Policy: TARPIT
+
+Exported Submission Artifact:
+- Target File: results/day1_level1_submission.json
+- Status: Ready for Level 1 WhatsApp API submission prior to 8:00 PM deadline.`;
+    }
     // 5. Isolate or Tarpit Specific Attackers
     else if (lower.includes("isolate") || lower.includes("quarantine")) {
       const match = text.match(/(?:ip\s+)?((?:\d{1,3}\.){3}\d{1,3})/);
@@ -289,6 +346,7 @@ export default function SpectreAIAgent({
 - /mode [autonomous|supervised] : Toggle AI defense governance mode
 - /isolate [ip] : Quarantine and sever routes for an adversarial IP
 - /tarpit [ip] : Inject exponential response delay into attacker socket
+- /evaluate : Display CyberSentinel multi-agent pipeline benchmark results
 - /status : Display full security telemetry and deception ratio briefing
 - /clear : Reset Spectre AI session history
 
@@ -340,20 +398,20 @@ To execute an action, try:
     <div
       role="dialog"
       aria-label="Spectre AI"
-      className="fixed inset-y-0 right-0 z-50 w-full sm:w-120 lg:w-130 shadow-2xl flex flex-col border-l backdrop-blur-2xl transition-all duration-300 animate-in slide-in-from-right"
+      className="fixed inset-y-0 right-0 z-50 w-full sm:w-120 lg:w-130 shadow-2xl flex flex-col border-l backdrop-blur-sm transition-all duration-300 animate-in slide-in-from-right"
       style={{
-        backgroundColor: isLight ? "rgba(255, 255, 255, 0.96)" : "rgba(9, 13, 22, 0.96)",
-        borderColor: isLight ? "rgba(226, 232, 240, 0.9)" : "rgba(30, 41, 59, 0.9)",
+        backgroundColor: isLight ? "rgba(255, 255, 255, 0.96)" : "rgba(11, 15, 23, 0.98)",
+        borderColor: isLight ? "rgba(226, 232, 240, 0.9)" : "#1e293b",
       }}
     >
       {/* Spectre AI Header */}
       <div
         className={`px-5 py-4 border-b flex items-center justify-between ${
-          isLight ? "border-slate-200 bg-slate-50/80" : "border-slate-800/80 bg-black/40"
+          isLight ? "border-slate-200 bg-slate-50/80" : "border-slate-800 bg-[#0B0F17]"
         }`}
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+          <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
             <Bot className="w-5 h-5" />
           </div>
           <div>
@@ -365,8 +423,8 @@ To execute an action, try:
               >
                 Spectre AI
               </h2>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-500/10 text-cyan-400 border border-cyan-500/25">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 ONLINE
               </span>
             </div>

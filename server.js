@@ -3,6 +3,7 @@ const cors = require("cors");
 const Database = require("better-sqlite3");
 const crypto = require("crypto");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
 const PORT = 5000;
@@ -475,6 +476,20 @@ app.get("/api/alerts", (_req, res) => {
     console.error("Alert query error:", err.message);
     res.status(500).json({ error: "Failed to retrieve alerts" });
   }
+});
+
+// GET /api/defense/evaluation -- return latest CyberSentinel multi-agent benchmark evaluation
+app.get("/api/defense/evaluation", (_req, res) => {
+  const jsonPath = path.join(__dirname, "results", "day1_level1_submission.json");
+  if (fs.existsSync(jsonPath)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
+      return res.json(data);
+    } catch (e) {
+      return res.status(500).json({ error: "Failed to parse evaluation results: " + e.message });
+    }
+  }
+  res.status(404).json({ error: "No evaluation results found. Run src/evaluate_pipeline.py first." });
 });
 
 // GET /api/traps -- return all stored traps

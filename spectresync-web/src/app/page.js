@@ -1404,7 +1404,7 @@ export default function SpectreSyncDashboard() {
         className={`absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 pointer-events-none ${
           isLight
             ? "bg-[radial-gradient(ellipse_60%_40%_at_50%_0%,rgba(217,119,6,0.08),rgba(255,255,255,0))]"
-            : "bg-[radial-gradient(ellipse_60%_40%_at_50%_0%,rgba(6,182,212,0.1),rgba(255,255,255,0))]"
+            : "bg-[radial-gradient(ellipse_60%_40%_at_50%_0%,rgba(16,185,129,0.06),rgba(255,255,255,0))]"
         }`}
       />
 

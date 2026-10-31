@@ -150,7 +150,7 @@ class ThreatDetectionAgent:
             )
 
         print(f"[Agent 1] Loading dataset from {data_path}...")
-        df = pd.read_csv(data_path)
+        df = pd.read_parquet(data_path) if str(data_path).endswith(".parquet") else pd.read_csv(data_path)
         df = clean_dataframe(df)
 
         if "target_label" not in df.columns:
